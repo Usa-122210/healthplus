@@ -34,7 +34,7 @@ export function useVoiceCompanion(defaultLang: 'auto' | ConversationLanguage = '
   const [voicePhase, setVoicePhase] = useState<VoicePhase>('idle');
   const [transcript, setTranscript] = useState('');
   const [speechError, setSpeechError] = useState<string | null>(null);
-  const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(true);
+  const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
   const sttSupported =
     typeof window !== 'undefined' &&
     Boolean(

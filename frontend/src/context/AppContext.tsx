@@ -182,7 +182,7 @@ export interface AppContextValue {
   logMeal: (meal: Omit<LoggedMeal, 'id' | 'dateISO' | 'timeLabel'>) => void;
   logWorkout: (workout: Omit<WorkoutSession, 'id' | 'dateISO' | 'timeLabel'>) => void;
   adjustHydration: (deltaLiters: number) => void;
-  sendUserMessage: (text: string) => Promise<ChatMessage>;
+  sendUserMessage: (text: string, file?: File | null) => Promise<ChatMessage>;
   backendHealth: BackendHealthStatus | null;
   aiProviderMode: AiBackendProviderMode;
   aiProviderLabel: string;
@@ -713,20 +713,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const sendUserMessage = async (text: string): Promise<ChatMessage> => {
-    const clean = text.trim();
+  const sendUserMessage = async (
+    text: string,
+    file?: File | null
+  ): Promise<ChatMessage> => {
+    const clean = text.trim() || (file ? 'Analyzed food plate photo' : '');
     const snapshot = stateRef.current;
-    const result = await executeConnectedAiTurn(clean, snapshot);
+    const result = await executeConnectedAiTurn(clean, snapshot, file);
     const turnResult = result.turn;
 
     setAiProviderMode(result.providerMode);
     setAiProviderLabel(result.providerLabel);
+
+    let userImageUrl: string | undefined = undefined;
+    if (file) {
+      try {
+        userImageUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      } catch {
+        userImageUrl = URL.createObjectURL(file);
+      }
+    }
 
     const nowISO = new Date().toISOString();
     const userMsg: ChatMessage = {
       id: `usr-${Date.now()}`,
       role: 'user',
       content: clean,
+      imageUrl: userImageUrl,
       language: turnResult.assistantMessage.language,
       timestamp: nowISO,
     };
@@ -742,6 +759,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         : undefined,
     };
+
+    const mealEntry: LoggedMeal | null = result.loggedMeal
+      ? {
+          ...result.loggedMeal,
+          id: `meal-${Date.now()}`,
+          dateISO: nowISO.slice(0, 10),
+          timeLabel: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        }
+      : null;
 
     setState((prev) => {
       let nextProfile = prev.profile;
@@ -785,6 +814,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             turnResult.preferCheaper ?? prev.foodFeedbackMemory.preferCheaper,
         },
         conversationMemory: turnResult.updatedMemory,
+        mealsLogged: mealEntry ? [mealEntry, ...prev.mealsLogged] : prev.mealsLogged,
         chatMessages: [...prev.chatMessages, userMsg, annotatedAssistant],
       };
     });

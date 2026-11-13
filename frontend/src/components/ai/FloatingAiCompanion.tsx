@@ -10,6 +10,7 @@ import {
   X,
   Square,
   ShieldAlert,
+  Camera,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useVoiceCompanion } from '@/hooks/useVoiceCompanion';
@@ -43,8 +44,11 @@ export const FloatingAiCompanion: React.FC<FloatingAiCompanionProps> = ({
 }) => {
   const { state, sendUserMessage } = useApp();
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [selectedPhotoPreview, setSelectedPhotoPreview] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const prefLang = state.profile?.lifestyle.preferredLanguage ?? 'auto';
   const {
@@ -68,9 +72,31 @@ export const FloatingAiCompanion: React.FC<FloatingAiCompanionProps> = ({
 
   if (!state.onboardingCompleted) return null;
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setSelectedPhotoFile(f);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setSelectedPhotoPreview(reader.result);
+      }
+    };
+    reader.readAsDataURL(f);
+  };
+
+  const clearSelectedPhoto = () => {
+    setSelectedPhotoFile(null);
+    setSelectedPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const submitMessage = async (textToSend?: string) => {
     const clean = (textToSend ?? inputRef.current?.value ?? transcript).trim();
-    if (!clean) return;
+    if (!clean && !selectedPhotoFile) return;
+
+    const fileToSend = selectedPhotoFile;
+    clearSelectedPhoto();
     setTranscript('');
     if (!textToSend && inputRef.current) {
       inputRef.current.value = '';
@@ -78,7 +104,7 @@ export const FloatingAiCompanion: React.FC<FloatingAiCompanionProps> = ({
     setVoicePhase('thinking');
 
     try {
-      const reply = await sendUserMessage(clean);
+      const reply = await sendUserMessage(clean, fileToSend);
       if (voiceOutputEnabled) {
         speakText(reply.content, reply.language);
       } else {
@@ -204,7 +230,31 @@ export const FloatingAiCompanion: React.FC<FloatingAiCompanionProps> = ({
                       : 'bg-forest/6 dark:bg-white/8 text-forest dark:text-ivory border border-forest/10 dark:border-white/10'
                   }`}
                 >
+                  {msg.imageUrl && (
+                    <div className="mb-2 overflow-hidden rounded-xl border border-white/20">
+                      <img
+                        src={msg.imageUrl}
+                        alt="Meal plate photo"
+                        className="w-full max-h-36 object-cover rounded-xl"
+                      />
+                    </div>
+                  )}
+
                   {renderFormattedText(msg.content)}
+
+                  {msg.preprocessedImageUrl && (
+                    <div className="mt-2 p-1.5 rounded-xl bg-forest/5 dark:bg-black/25 border border-forest/10 dark:border-white/10">
+                      <div className="flex items-center gap-1 text-[9px] font-semibold text-emerald mb-1">
+                        <Sparkles className="w-3 h-3" />
+                        <span>OpenCV CLAHE Enhanced</span>
+                      </div>
+                      <img
+                        src={msg.preprocessedImageUrl}
+                        alt="OpenCV CLAHE Enhanced plate"
+                        className="w-full max-h-32 object-cover rounded-lg border border-forest/10 dark:border-white/10"
+                      />
+                    </div>
+                  )}
                   {msg.safetyNotice && (
                     <div className="mt-2 p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-[10px] flex items-start gap-1.5">
                       <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-gold shrink-0 mt-0.5" />
@@ -232,6 +282,30 @@ export const FloatingAiCompanion: React.FC<FloatingAiCompanionProps> = ({
             <div ref={bottomRef} />
           </div>
 
+          {/* Selected photo preview strip */}
+          {selectedPhotoPreview && (
+            <div className="px-3 pt-2.5 pb-1 flex items-center gap-2 bg-ivory/70 dark:bg-[#06150F] border-t border-forest/10 dark:border-white/10">
+              <div className="relative shrink-0">
+                <img
+                  src={selectedPhotoPreview}
+                  alt="Selected plate"
+                  className="w-10 h-10 object-cover rounded-lg border-2 border-emerald"
+                />
+                <button
+                  type="button"
+                  onClick={clearSelectedPhoto}
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] shadow hover:bg-rose-600"
+                  title="Remove photo"
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </div>
+              <span className="text-[10px] font-semibold text-emerald truncate">
+                Plate photo attached · Ready to scan
+              </span>
+            </div>
+          )}
+
           {/* Speech feedback / Transcript Correction Bar */}
           <div className="p-3 border-t border-forest/10 dark:border-white/10 space-y-2 bg-ivory/70 dark:bg-[#06150F]">
             {speechError && (
@@ -244,6 +318,25 @@ export const FloatingAiCompanion: React.FC<FloatingAiCompanionProps> = ({
               }}
               className="flex items-center gap-1.5"
             >
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoSelect}
+              />
+
+              {/* Camera Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-xl bg-white dark:bg-white/5 border border-forest/15 dark:border-white/15 text-emerald hover:bg-emerald/10 shrink-0 flex items-center justify-center transition-all"
+                title="Scan food plate photo"
+              >
+                <Camera className="w-4 h-4 text-emerald" />
+              </button>
+
               <button
                 type="button"
                 onClick={() =>
@@ -268,7 +361,7 @@ export const FloatingAiCompanion: React.FC<FloatingAiCompanionProps> = ({
                 type="text"
                 value={transcript}
                 onChange={(e) => setTranscript(e.target.value)}
-                placeholder="Ask or edit voice text (Eng / Hinglish / हिंदी)…"
+                placeholder="Ask, speak, or click 📷 to scan plate…"
                 className="flex-1 rounded-xl border border-forest/15 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2 text-xs text-forest dark:text-white focus:outline-none focus:border-emerald"
               />
 

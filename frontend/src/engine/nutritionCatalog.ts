@@ -1,11 +1,14 @@
 import type {
   AllergenKey,
+  DietaryPattern,
   IndianCuisineRegion,
   IngredientKey,
+  MealSlot,
   NutritionRecipe,
   SpiceTolerance,
 } from '@/types/wellness';
 import { computeRecipeMacrosFromIngredients } from './foodComposition';
+import { INDIAN_FOOD_CATALOG, type CatalogFoodItem } from '@/data/indianFoodCatalog';
 
 export interface IngredientMeta {
   key: IngredientKey;
@@ -84,7 +87,13 @@ export const SPICE_TOLERANCE_OPTIONS: { id: SpiceTolerance; label: string }[] = 
 ];
 
 export function getIngredientLabel(key: IngredientKey): string {
-  return INGREDIENT_CATALOG.find((item) => item.key === key)?.label ?? key;
+  const basic = INGREDIENT_CATALOG.find((item) => item.key === key)?.label;
+  if (basic) return basic;
+  const catalogItem = INDIAN_FOOD_CATALOG.find(
+    (f) => f.name.toLowerCase() === key.toLowerCase() || f.id === key
+  );
+  if (catalogItem) return catalogItem.name;
+  return key;
 }
 
 export function extractIngredientsFromText(text: string): IngredientKey[] {
@@ -782,8 +791,88 @@ const RAW_NUTRITION_RECIPES: NutritionRecipe[] = [
   },
 ];
 
-export const NUTRITION_RECIPES: NutritionRecipe[] = RAW_NUTRITION_RECIPES.map((recipe) => ({
-  ...recipe,
-  macros: computeRecipeMacrosFromIngredients(recipe.ingredientAmounts, 180),
-  dataProvenance: 'reference_ingredient_computed_prototype',
-}));
+function determineVisualTheme(name: string): NutritionRecipe['visualTheme'] {
+  const lower = name.toLowerCase();
+  if (lower.includes('dosa')) return 'ragi_dosa';
+  if (lower.includes('dal') || lower.includes('tadka') || lower.includes('sambar')) return 'dal_bowl';
+  if (lower.includes('chilla')) return 'chilla_platter';
+  if (lower.includes('khichdi')) return 'khichdi_pot';
+  if (lower.includes('oats')) return 'oats_bowl';
+  if (lower.includes('paneer')) return 'paneer_skillet';
+  if (lower.includes('egg') || lower.includes('anda')) return 'egg_bhurji';
+  if (lower.includes('curd') || lower.includes('dahi')) return 'curd_rice';
+  if (lower.includes('poha')) return 'poha_plate';
+  if (lower.includes('soya')) return 'soya_stir';
+  if (lower.includes('chicken') || lower.includes('fish') || lower.includes('mutton')) return 'chicken_bowl';
+  return 'roti_sabzi';
+}
+
+function mapCatalogToRecipe(food: CatalogFoodItem): NutritionRecipe {
+  const isBreakfast = food.category === 'breakfast';
+  const isSnack = ['snack', 'sweet', 'beverage'].includes(food.category);
+  const slot: MealSlot = isBreakfast ? 'breakfast' : isSnack ? 'snack' : 'dinner';
+
+  const dietTypes: DietaryPattern[] =
+    food.dietType === 'vegan'
+      ? ['vegetarian', 'vegan', 'eggetarian', 'non_vegetarian', 'jain']
+      : food.dietType === 'veg'
+        ? ['vegetarian', 'eggetarian', 'non_vegetarian']
+        : ['non_vegetarian'];
+
+  const matchedIngredients = extractIngredientsFromText(food.name);
+  const requiredIngredients: IngredientKey[] =
+    matchedIngredients.length > 0 ? matchedIngredients : [food.name as IngredientKey];
+
+  return {
+    id: `catalog-${food.id}`,
+    name: food.name,
+    hinglishName: food.name,
+    hindiName: food.name,
+    mealSlot: slot,
+    dietTypes,
+    cuisineTags: ['homestyle_pan_indian', 'north_indian', 'south_indian', 'west_gujarati_marathi'],
+    spiceLevel: 'medium',
+    requiredIngredients,
+    optionalIngredients: [],
+    ingredientAmounts: [],
+    allergens: food.category === 'dairy' || food.name.toLowerCase().includes('paneer') ? ['dairy'] : [],
+    containsGluten: ['bread'].includes(food.category) || food.name.toLowerCase().includes('roti'),
+    glycemicLoad: food.calories > 480 ? 'medium' : 'low',
+    sodiumLevel: 'low',
+    kidneyStrainFlag: false,
+    prepMins: 15,
+    difficulty: 'Easy',
+    budgetTier: 'budget',
+    equipment: ['basic_stove', 'full_kitchen'],
+    macros: {
+      calories: Math.round(food.calories),
+      proteinG: Math.round(food.proteinG),
+      carbsG: Math.round(food.carbsG),
+      fatG: Math.round(food.fatsG),
+      fiberG: 5,
+      sodiumMg: 280,
+    },
+    dataProvenance: 'reference_ingredient_computed_prototype',
+    referenceItems: [food.servingUnit],
+    provenanceNote: 'From 574+ Indian Food & Nutrition catalog',
+    summary: `${food.name} (${food.servingUnit}) — ${food.calories} kcal, ${food.proteinG}g protein.`,
+    whyItFits: `${food.region} staple balancing ~${food.calories} kcal with ${food.proteinG}g protein.`,
+    steps: [
+      `Prepare fresh ${food.name} according to standard homestyle recipe.`,
+      `Portion as ${food.servingUnit} to meet ~${food.calories} kcal and ${food.proteinG}g protein target.`
+    ],
+    visualTheme: determineVisualTheme(food.name),
+    swaps: ['Pair with a small salad or fresh kachumber']
+  };
+}
+
+export const NUTRITION_RECIPES: NutritionRecipe[] = [
+  ...RAW_NUTRITION_RECIPES.map((recipe) => ({
+    ...recipe,
+    macros: computeRecipeMacrosFromIngredients(recipe.ingredientAmounts, 180),
+    dataProvenance: 'reference_ingredient_computed_prototype' as const,
+  })),
+  ...INDIAN_FOOD_CATALOG
+    .filter((f) => ['combo', 'sabzi', 'dal', 'breakfast', 'rice', 'bread'].includes(f.category))
+    .map(mapCatalogToRecipe),
+];

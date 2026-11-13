@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formwise — MediaPipe Repetition Counter | Health Plus</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    :root {
+      --bg: #0c181a;
+      --panel: #102326;
+      --card: #152d30;
+      --border: #284144;
+      --text: #edf5f2;
+      --muted: #9fb1ac;
+      --lime: #c6f06e;
+      --red: #ff8175;
+      --amber: #f1ba5b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: baseline; gap: 12px; }
+    .brand h1 { font-size: 22px; font-weight: 900; letter-spacing: 1px; color: var(--text); }
+    .brand span { font-size: 13px; color: var(--muted); }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+      flex: 1;
+    }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .stage {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .status-badge {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+    .status-badge.good { color: var(--lime); }
+    .status-badge.bad { color: var(--red); }
+    .camera-btn {
+      background: var(--lime);
+      color: #102022;
+      border: none;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .camera-btn.stop { background: var(--red); color: #2a0e0b; }
+    .counter-text {
+      font-family: Consolas, monospace;
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--text);
+    }
+    .video-container {
+      position: relative;
+      background: #081113;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 12px 0;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    video, canvas {
+      width: 100%;
+      height: 100%;
+      max-height: 480px;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+    .empty-prompt {
+      text-align: center;
+      color: var(--muted);
+      padding: 30px;
+    }
+    .stage-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      padding-top: 8px;
+    }
+    .sidebar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sidebar h2 {
+      font-family: Consolas, monospace;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--lime);
+      letter-spacing: 1px;
+    }
+    .exercise-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .exercise-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .exercise-btn.active {
+      background: var(--lime);
+      color: #102022;
+      border-color: var(--lime);
+    }
+    .details {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+    .details h3 { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+    .hint { color: var(--lime); font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+    .instruction { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .action-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+    .action-btn.active { color: var(--lime); }
+    .send-main-btn {
+      background: var(--lime);
+      color: #102022;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .send-main-btn:hover { opacity: 0.92; }
+    .rule-note {
+      font-size: 11px;
+      color: #718782;
+      line-height: 1.35;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>FORMWISE</h1>
+      <span>Health Plus exercise coach · pose-based repetition counter</span>
+    </div>
+    <div>
+      <button class="camera-btn" onclick="sendToMainWebsite()" style="background:#152d30; color:var(--lime); border:1px solid var(--border);">
+        ⬅ Back to Health Plus
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Camera Feed Stage -->
+    <div class="stage">
+      <div class="stage-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="statusBadge" class="status-badge">READY TO START</div>
+          <button id="toggleCameraBtn" class="camera-btn" onclick="toggleCamera()">Start camera</button>
+        </div>
+        <div id="counterLabel" class="counter-text">REPS 0</div>
+      </div>
+
+      <div class="video-container">
+        <video id="videoElement" playsinline autoplay muted style="display:none;"></video>
+        <canvas id="canvasElement"></canvas>
+        <div id="emptyPrompt" class="empty-prompt">
+          <p style="font-size:16px; font-weight:700; margin-bottom:8px;">Camera is off</p>
+          <p style="font-size:13px;">Select an exercise on the right, then press <strong>Start camera</strong></p>
+        </div>
+      </div>
+
+      <div class="stage-footer">
+        <div id="feedbackText">Camera is off</div>
+        <div id="fpsLabel"></div>
+      </div>
+    </div>
+
+    <!-- Controls Sidebar -->
+    <div class="sidebar">
+      <h2>CHOOSE EXERCISE</h2>
+      <div class="exercise-list" id="exerciseList"></div>
+
+      <div class="details">
+        <h3 id="exName">Push-up</h3>
+        <p id="exHint" class="hint">Side view · camera low</p>
+        <p id="exInstruction" class="instruction">Keep your body straight. Lower your chest, then press back up.</p>
+      </div>
+
+      <div class="btn-row">
+        <button id="resetBtn" class="action-btn" onclick="resetReps()">Reset reps</button>
+        <button id="voiceBtn" class="action-btn active" onclick="toggleVoice()">Voice on</button>
+      </div>
+
+      <button class="send-main-btn" onclick="sendToMainWebsite()">
+        ✓ Finish & Send to Health Plus
+      </button>
+
+      <p class="rule-note">
+        Voice correction only plays during sustained bad form. It stops immediately when form becomes correct.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const EXERCISES = {
+      pushup: {
+        id: "pushup",
+        name: "Push-up",
+        hint: "Side view · camera low",
+        instruction: "Keep your body straight. Lower your chest, then press back up.",
+        kcalPerRep: 0.55,
+      },
+      squat: {
+        id: "squat",
+        name: "Bodyweight squat",
+        hint: "Front or side view · feet visible",
+        instruction: "Stand tall, lower under control, then return to standing.",
+        kcalPerRep: 0.45,
+      },
+      jumping_jack: {
+        id: "jumping_jack",
+        name: "Jumping jack",
+        hint: "Front view · full body visible",
+        instruction: "Open arms and feet together, then return to the closed position.",
+        kcalPerRep: 0.25,
+      },
+      lunge: {
+        id: "lunge",
+        name: "Lunge",
+        hint: "Side view · show both feet",
+        instruction: "Step forward, bend both knees, then return to standing.",
+        kcalPerRep: 0.50,
+      },
+      bicep_curl: {
+        id: "bicep_curl",
+        name: "Bicep curl",
+        hint: "Front or slight-angle view · show both arms",
+        instruction: "Keep an elbow by your side. Curl either hand toward your shoulder, then lower it.",
+        kcalPerRep: 0.35,
+      },
+      high_knees: {
+        id: "high_knees",
+        name: "High knees",
+        hint: "Front view · show your full body and both feet",
+        instruction: "Face the camera. Lift either knee to about a 90° bend, lower it, then lift again.",
+        kcalPerRep: 0.30,
+      },
+      wall_sit: {
+        id: "wall_sit",
+        name: "Wall sit",
+        hint: "Side view · wall, full body, and feet visible",
+        instruction: "Keep your back against the wall, thighs level, and knees near 90°. The timer runs only while this position is held.",
+        usesTimer: true,
+        kcalPerRep: 0.15,
+      }
+    };
+
+    let activeExerciseId = "pushup";
+    let isRunning = false;
+    let voiceEnabled = true;
+    let totalReps = 0;
+    let phase = "ready";
+    let badFrames = 0;
+    let elapsedSeconds = 0;
+    let wallSitHolding = false;
+    let wallSitTimerInterval = null;
+    let sessionStartMs = Date.now();
+    let lastSpokenMs = 0;
+
+    const video = document.getElementById("videoElement");
+    const canvas = document.getElementById("canvasElement");
+    const ctx = canvas.getContext("2d");
+    const statusBadge = document.getElementById("statusBadge");
+    const counterLabel = document.getElementById("counterLabel");
+    const feedbackText = document.getElementById("feedbackText");
+    const toggleBtn = document.getElementById("toggleCameraBtn");
+    const emptyPrompt = document.getElementById("emptyPrompt");
+    let cameraInstance = null;
+    let poseInstance = null;
+
+    // Angle math
+    function calcAngle(a, b, c) {
+      const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+      let deg = Math.abs((radians * 180) / Math.PI);
+      return deg > 180 ? 360 - deg : deg;
+    }
+
+    function calcDistance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function speak(text) {
+      if (!voiceEnabled || !window.speechSynthesis) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.0;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }
+
+    function renderExerciseMenu() {
+      const container = document.getElementById("exerciseList");
+      container.innerHTML = "";
+      Object.keys(EXERCISES).forEach(id => {
+        const ex = EXERCISES[id];
+        const btn = document.createElement("button");
+        btn.className = "exercise-btn" + (id === activeExerciseId ? " active" : "");
+        btn.innerText = ex.name;
+        btn.onclick = () => selectExercise(id);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectExercise(id) {
+      activeExerciseId = id;
+      totalReps = 0;
+      phase = id === "jumping_jack" ? "closed" : "ready";
+      badFrames = 0;
+      elapsedSeconds = 0;
+      wallSitHolding = false;
+      renderExerciseMenu();
+      const ex = EXERCISES[id];
+      document.getElementById("exName").innerText = ex.name;
+      document.getElementById("exHint").innerText = ex.hint;
+      document.getElementById("exInstruction").innerText = ex.instruction;
+      document.getElementById("resetBtn").innerText = ex.usesTimer ? "Reset timer" : "Reset reps";
+      counterLabel.innerText = ex.usesTimer ? "TIME  00:00" : "REPS  0";
+      setStatus("READY TO START", "amber");
+    }
+
+    function setStatus(text, type) {
+      statusBadge.innerText = text;
+      statusBadge.className = "status-badge " + (type === "good" ? "good" : type === "bad" ? "bad" : "");
+    }
+
+    function resetReps() {
+      totalReps = 0;
+      elapsedSeconds = 0;
+      phase = activeExerciseId === "jumping_jack" ? "closed" : "ready";
+      counterLabel.innerText = EXERCISES[activeExerciseId].usesTimer ? "TIME  00:00" : "REPS  0";
+      setStatus("REPS RESET", "amber");
+    }
+
+    function toggleVoice() {
+      voiceEnabled = !voiceEnabled;
+      const btn = document.getElementById("voiceBtn");
+      btn.innerText = voiceEnabled ? "Voice on" : "Voice off";
+      btn.className = "action-btn" + (voiceEnabled ? " active" : "");
+    }
+
+    // Wall Sit Timer
+    setInterval(() => {
+      if (activeExerciseId === "wall_sit" && isRunning && wallSitHolding) {
+        elapsedSeconds += 1;
+        const m = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+        const s = String(elapsedSeconds % 60).padStart(2, '0');
+        counterLabel.innerText = `TIME  ${m}:${s}`;
+      }
+    }, 1000);
+
+    // Rep evaluation state machine
+    function evaluatePose(lm) {
+      if (!lm || lm.length < 33) {
+        setStatus("NO PERSON IN FRAME", "amber");
+        return;
+      }
+
+      let label = "GOOD FORM";
+      let isBad = false;
+      let primaryAngle = null;
+
+      if (activeExerciseId === "squat") {
+        const leftKnee = calcAngle(lm[23], lm[25], lm[27]);
+        const rightKnee = calcAngle(lm[24], lm[26], lm[28]);
+        const knee = (leftKnee + rightKnee) / 2;
+        primaryAngle = Math.round(knee);
+
+        const hipW = calcDistance(lm[23], lm[24]);
+        const ankleW = calcDistance(lm[27], lm[28]);
+        const kneeW = calcDistance(lm[25], lm[26]);
+        const kneeCave = ankleW > hipW * 0.9 && kneeW < ankleW * 0.6;
+        isBad = kneeCave;
+
+        if (phase === "up" && knee <= 105) {
+          phase = "down";
+        } else if (phase === "down" && knee >= 160) {
+          phase = "up";
+          totalReps += 1;
+          counterLabel.innerText = `REPS  ${totalReps}`;
+          speak(`Rep ${totalReps}`);
+        }
+        label = isBad ? "BAD FORM: KEEP KNEES OUT" : "GOOD FORM";
+      } else if (activeExerciseId === "pushup") {
+        const leftArm = calcAngle(lm[11], lm[13], lm[15]);
+        const leftBody = calcAngle(lm[11], lm[23], lm[25]);
+        primaryAngle = Math.round(leftArm);
+        isBad = leftBody < 150;
+
+        if (phase === "up" && leftArm <= 105) {
+          phase = "down";
+        } else if (phase === "down" && leftArm >= 155) {
+          phase = "up";
+          totalReps += 1;
+          counterLabel.innerText = `REPS  ${totalReps}`;
+          speak(`Rep ${totalReps}`);
+        }
+        label = isBad ? "BAD FORM: KEEP BODY STRAIGHT" : "GOOD FORM";
+      } else if (activeExerciseId === "jumping_jack") {
+        const shoulderW = Math.max(calcDistance(lm[11], lm[12]), 0.06);
+        const footW = calcDistance(lm[27], lm[28]) / shoulderW;
+        const wristHigh = Math.min(lm[15].y, lm[16].y) < Math.min(lm[11].y, lm[12].y) - 0.12;
+
+        if (phase === "closed" && wristHigh && footW > 1.6) {
+          phase = "open";
+        } else if (phase === "open" && footW < 1.1) {
+          phase = "closed";
+          totalReps += 1;
+          counterLabel.innerText = `REPS  ${totalReps}`;
+          speak(`Rep ${totalReps}`);
+        }
+        label = phase === "open" ? "OPEN POSITION" : "CLOSED POSITION";
+      } else if (activeExerciseId === "lunge") {
+        const leftK = calcAngle(lm[23], lm[25], lm[27]);
+        const rightK = calcAngle(lm[24], lm[26], lm[28]);
+        primaryAngle = Math.round(Math.min(leftK, rightK));
+
+        if (phase === "up" && leftK <= 130 && rightK <= 130) {
+          phase = "down";
+        } else if (phase === "down" && leftK >= 150 && rightK >= 150) {
+          phase = "up";
+          totalReps += 1;
+          counterLabel.innerText = `REPS  ${totalReps}`;
+          speak(`Rep ${totalReps}`);
+        }
+        label = phase === "down" ? "LUNGE POSITION" : "READY: STEP FORWARD";
+      } else if (activeExerciseId === "bicep_curl") {
+        const leftArm = calcAngle(lm[11], lm[13], lm[15]);
+        const rightArm = calcAngle(lm[12], lm[14], lm[16]);
+        const curlArm = Math.min(leftArm, rightArm);
+        primaryAngle = Math.round(curlArm);
+
+        if (phase === "ready" && curlArm <= 85) {
+          phase = "curled";
+        } else if (phase === "curled" && curlArm >= 155) {
+          phase = "ready";
+          totalReps += 1;
+          counterLabel.innerText = `REPS  ${totalReps}`;
+          speak(`Rep ${totalReps}`);
+        }
+        label = "GOOD FORM: BICEP CURL";
+      } else if (activeExerciseId === "high_knees") {
+        const leftK = calcAngle(lm[23], lm[25], lm[27]);
+        const rightK = calcAngle(lm[24], lm[26], lm[28]);
+        primaryAngle = Math.round(Math.min(leftK, rightK));
+
+        if (leftK <= 115 || rightK <= 115) {
+          if (phase === "ready") {
+            phase = "knee_up";
+            totalReps += 1;
+            counterLabel.innerText = `REPS  ${totalReps}`;
+            speak(`Rep ${totalReps}`);
+          }
+        } else if (leftK >= 155 && rightK >= 155) {
+          phase = "ready";
+        }
+        label = "GOOD FORM: HIGH KNEES";
+      } else if (activeExerciseId === "wall_sit") {
+        const knee = calcAngle(lm[23], lm[25], lm[27]);
+        const hip = calcAngle(lm[11], lm[23], lm[25]);
+        primaryAngle = Math.round(knee);
+        wallSitHolding = knee >= 72 && knee <= 118 && hip >= 68 && hip <= 122;
+        label = wallSitHolding ? "GOOD FORM: WALL SIT" : "GET INTO 90° WALL SIT";
+      }
+
+      // Voice warning on sustained bad posture
+      if (isBad) {
+        badFrames += 1;
+        if (badFrames >= 8 && Date.now() - lastSpokenMs > 2600) {
+          speak("Wrong form. Please correct your posture.");
+          lastSpokenMs = Date.now();
+        }
+      } else {
+        badFrames = 0;
+      }
+
+      setStatus(label, isBad ? "bad" : "good");
+      feedbackText.innerText = primaryAngle != null ? `Joint Angle: ${primaryAngle}° · Tracking active` : "Pose tracking active";
+    }
+
+    // Skeleton drawing
+    const CONNECTIONS = [
+      [11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],
+      [23,24],[23,25],[25,27],[24,26],[26,28]
+    ];
+
+    function drawSkeleton(landmarks) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const isBad = badFrames >= 8;
+      const color = isBad ? "#ff8175" : "#c6f06e";
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = "round";
+
+      for (const [i, j] of CONNECTIONS) {
+        const p1 = landmarks[i];
+        const p2 = landmarks[j];
+        if (p1 && p2 && (p1.visibility || 1) > 0.4 && (p2.visibility || 1) > 0.4) {
+          ctx.beginPath();
+          ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
+          ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
+          ctx.stroke();
+        }
+      }
+
+      for (const p of landmarks) {
+        if (p && (p.visibility || 1) > 0.4) {
+          ctx.beginPath();
+          ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // MediaPipe initialization
+    function onPoseResults(results) {
+      if (!isRunning) return;
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      if (results.poseLandmarks) {
+        evaluatePose(results.poseLandmarks);
+        drawSkeleton(results.poseLandmarks);
+      } else {
+        setStatus("NO PERSON IN FRAME", "amber");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    async function toggleCamera() {
+      if (isRunning) {
+        stopCamera();
+        return;
+      }
+      try {
+        emptyPrompt.style.display = "none";
+        video.style.display = "block";
+        isRunning = true;
+        toggleBtn.innerText = "Stop camera";
+        toggleBtn.className = "camera-btn stop";
+        sessionStartMs = Date.now();
+
+        if (!poseInstance) {
+          poseInstance = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+          });
+          poseInstance.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+          });
+          poseInstance.onResults(onPoseResults);
+        }
+
+        cameraInstance = new Camera(video, {
+          onFrame: async () => {
+            if (isRunning && poseInstance) {
+              await poseInstance.send({ image: video });
+            }
+          },
+          width: 640,
+          height: 480,
+        });
+        await cameraInstance.start();
+        setStatus("CAMERA ACTIVE · GET READY", "amber");
+      } catch (err) {
+        alert("Could not access camera: " + err.message);
+        stopCamera();
+      }
+    }
+
+    function stopCamera() {
+      isRunning = false;
+      if (cameraInstance) {
+        try { cameraInstance.stop(); } catch (e) {}
+      }
+      toggleBtn.innerText = "Start camera";
+      toggleBtn.className = "camera-btn";
+      emptyPrompt.style.display = "block";
+      video.style.display = "none";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setStatus("READY TO START", "amber");
+      feedbackText.innerText = "Camera is off";
+    }
+
+    // Send completed workout back to Health Plus website
+    function sendToMainWebsite() {
+      const ex = EXERCISES[activeExerciseId];
+      const reps = Math.max(totalReps, 1);
+      const duration = Math.max(Math.round((Date.now() - sessionStartMs) / 1000), elapsedSeconds, 15);
+      const kcal = ex.usesTimer
+        ? Math.round(duration * ex.kcalPerRep)
+        : Math.round(reps * ex.kcalPerRep);
+
+      const payload = {
+        type: "FORMWISE_WORKOUT_COMPLETED",
+        exerciseId: activeExerciseId,
+        exerciseName: ex.name,
+        repsCompleted: reps,
+        durationSeconds: duration,
+        caloriesBurned: kcal,
+      };
+
+      // 1. Try sending to parent window (if opened as popup)
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage(payload, "*");
+        alert(`Workout logged: ${reps} ${ex.name} (~${kcal} kcal) sent to Health Plus!`);
+        window.close();
+        return;
+      }
+
+      // 2. Fallback: Redirect back to Move Studio with sync query params
+      const redirectUrl = `/move?syncedExercise=${encodeURIComponent(activeExerciseId)}&reps=${reps}&duration=${duration}&kcal=${kcal}`;
+      window.location.href = redirectUrl;
+    }
+
+    // Initialize UI on load
+    selectExercise("pushup");
+  </script>
+</body>
+</html>

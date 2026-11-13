@@ -114,7 +114,8 @@ export type IngredientKey =
   | 'tomato_onion'
   | 'banana'
   | 'peanuts'
-  | 'ghee_oil';
+  | 'ghee_oil'
+  | (string & {});
 
 export interface UserBasicProfile {
   name: string;
@@ -290,13 +291,19 @@ export interface LoggedMeal {
   sodiumMg: number;
   dateISO: string;
   timeLabel: string;
-  source: 'recommended_recipe' | 'quick_estimate' | 'photo_prototype_estimate' | 'ai_plate_scanner';
+  source:
+    | 'recommended_recipe'
+    | 'quick_estimate'
+    | 'photo_prototype_estimate'
+    | 'ai_plate_scanner'
+    | 'ai_chatbot_backend';
   provenanceLabel: string;
 }
 
 export type ExerciseTypeId =
-  | 'pushup'
   | 'squat'
+  | 'pushup'
+  | 'glute_bridge'
   | 'jumping_jack'
   | 'lunge'
   | 'bicep_curl'
@@ -395,6 +402,8 @@ export interface ChatMessage {
   recommendedRecipes?: ScoredRecipe[];
   actionChips?: ChatActionChip[];
   pipelineTrace?: AiPipelineTrace;
+  imageUrl?: string;
+  preprocessedImageUrl?: string;
 }
 
 export interface ActiveSafetyBanner {

@@ -256,8 +256,10 @@ export function recommendMeals(
       }
     }
     if (constraints.antiRepeatIds.includes(recipe.id)) {
-      score -= 25;
+      score -= 90;
     }
+    // Dynamic variety entropy so dishes alternate smoothly across turns
+    score += Math.random() * 12;
 
     if (matchReasons.length === 0) {
       matchReasons.push(recipe.whyItFits);

@@ -330,9 +330,10 @@ function understandMessage(userText: string, state: AppState): ParsedTurnUnderst
     );
   const isFoodIntent =
     Boolean(requestedSlot) ||
-    /\b(eat|meal|food|dinner|lunch|breakfast|snack|recipe|cook|hungry|protein|calorie|kcal|diet|khana|khaana|khau|khani|banau|banao|kitchen|pantry|ingredients)\b/i.test(
+    /\b(eat|meal|food|dinner|lunch|breakfast|snack|recipe|cook|hungry|protein|calorie|kcal|diet|khana|khaana|khau|khayu|khaye|khayein|khao|khani|banau|banaun|banao|pakaun|kitchen|pantry|ingredients|bhookh|bhuk|cravings?)\b/i.test(
       lower
-    );
+    ) ||
+    /(kya\s*kh|kya\s*ban|kya\s*le|kya\s*paka|mekya|kya\s*pakau|kya\s*khau|kya\s*khayu)/i.test(lower);
 
   let intent: ParsedTurnUnderstanding['intent'] = 'general_checkin';
 
@@ -1405,23 +1406,66 @@ export function runAiOrchestrator(userText: string, state: AppState): Orchestrat
   // Case F: Progress reflection / general check-in grounded in real logs
   const totalMealsCount = state.mealsLogged.length;
   const totalWorkoutsCount = state.workoutsLogged.length;
+  const isPureGreeting = /^(hi|hello|hey|namaste|pranam|hola|good\s*(morning|afternoon|evening))\b/i.test(
+    userText.trim()
+  );
 
-  const content =
-    understanding.intent === 'progress_checkin'
-      ? totalMealsCount === 0 && totalWorkoutsCount === 0
-        ? lang === 'hinglish'
+  let content = '';
+  if (understanding.intent === 'progress_checkin') {
+    if (totalMealsCount === 0 && totalWorkoutsCount === 0) {
+      content =
+        lang === 'hinglish'
           ? `Aapka profile ready hai, ${profile.basic.name}! Abhi aapne pehli meal ya movement session log nahi ki hai — aaj bas **ek meal** ya **5 minute ka Move session** complete karein, phir main aapke real patterns dikhana shuru karunga.`
           : lang === 'hi'
             ? `आपकी प्रोफ़ाइल तैयार है, ${profile.basic.name}! अभी तक कोई भोजन या एक्सरसाइज़ लॉग नहीं हुई है — आज एक छोटा मील या 5 मिनट का सत्र पूरा करें ताकि मैं वास्तविक पैटर्न दिखा सकूँ।`
-            : `Your profile is ready, ${profile.basic.name}! You haven't logged a meal or workout yet — log just **one meal** or complete **one short Move session** today so I can start reflecting real trends instead of guesses.`
-        : lang === 'hinglish'
+            : `Your profile is ready, ${profile.basic.name}! You haven't logged a meal or workout yet — log just **one meal** or complete **one short Move session** today so I can start reflecting real trends instead of guesses.`;
+    } else {
+      content =
+        lang === 'hinglish'
           ? `Aapka live summary, ${profile.basic.name}: abhi tak **${totalMealsCount} meals** aur **${totalWorkoutsCount} movement sessions** record hue hain. Aaj ~${kcalConsumed}/${targets.calorieTarget} kcal aur ~${proteinConsumed}/${targets.proteinTargetG}g protein par hain.`
-          : `Here's where things stand right now, ${profile.basic.name}: you've recorded **${totalMealsCount} meal(s)** and **${totalWorkoutsCount} movement session(s)**. Today you're at ~${kcalConsumed} of ${targets.calorieTarget} kcal and ~${proteinConsumed}g of ${targets.proteinTargetG}g protein.`
-      : lang === 'hi'
-        ? `नमस्ते ${profile.basic.name}! मैं आपका पर्सनल वेलनेस साथी हूँ। आज का आपका लक्ष्य ~${targets.calorieTarget} kcal और ~${targets.dailyMovementMinutes} मिनट गतिविधि है। आप मुझसे आज के भोजन, घर में मौजूद सामग्री, या 3D एक्सरसाइज़ के बारे में पूछ सकते हैं।`
+          : `Here's where things stand right now, ${profile.basic.name}: you've recorded **${totalMealsCount} meal(s)** and **${totalWorkoutsCount} movement session(s)**. Today you're at ~${kcalConsumed} of ${targets.calorieTarget} kcal and ~${proteinConsumed}g of ${targets.proteinTargetG}g protein.`;
+    }
+  } else if (isPureGreeting) {
+    content =
+      lang === 'hi'
+        ? `नमस्ते ${profile.basic.name}! मैं आपका पर्सनल वेलनेस साथी हूँ। आज का आपका लक्ष्य ~${targets.calorieTarget} kcal और ~${targets.dailyMovementMinutes} मिनट गतिविधि है। आप मुझसे भोजन सलाह, प्लेट स्कैन या एक्सरसाइज़ के बारे में पूछ सकते हैं।`
         : lang === 'hinglish'
-          ? `Main yahan hoon, ${profile.basic.name}. Aaj ka rhythm ~${targets.calorieTarget} kcal (${targets.proteinTargetG}g protein) aur ~${targets.dailyMovementMinutes} min movement hai. Mujhse puchiye: *"Aaj raat dinner mein kya banau?"*, apni kitchen ki cheezein batayein, ya ghar par Move workout plan lein.`
-          : `I'm right here with you, ${profile.basic.name}. Today's rhythm is ~${targets.calorieTarget} kcal (${targets.proteinTargetG}g protein) and ~${targets.dailyMovementMinutes} min movement. Ask me what to cook tonight, tell me what ingredients you have at home, or adjust today's workout.`;
+          ? `Main yahan hoon, ${profile.basic.name}. Aaj ka rhythm ~${targets.calorieTarget} kcal (${targets.proteinTargetG}g protein) aur ~${targets.dailyMovementMinutes} min movement hai. Batayein, aaj kis cheez mein help chahiye — dinner ideas, food logging ya workout?`
+          : `I'm right here with you, ${profile.basic.name}. Today's rhythm is ~${targets.calorieTarget} kcal (${targets.proteinTargetG}g protein) and ~${targets.dailyMovementMinutes} min movement. How can I guide you today?`;
+  } else {
+    // Dynamic real-time guidance based on actual intake
+    if (lang === 'hi') {
+      content =
+        `${profile.basic.name}, आज आपने **~${kcalConsumed} / ${targets.calorieTarget} kcal** ग्रहण किए हैं (~${remainingKcal} kcal शेष) और **~${proteinConsumed} / ${targets.proteinTargetG}g प्रोटीन** लिया है।\n\n` +
+        (remainingKcal > 100
+          ? `शेष **${remainingKcal} kcal** के लिए एक हल्का और सुपाच्य भोजन चुनें (जैसे मूंग दाल खिचड़ी, तोरई/लौकी की सब्ज़ी + फुल्का, या हल्का वेज सूप)। `
+          : `आपका दैनिक कैलोरी बजट लगभग पूर्ण है, अतः इस समय केवल पानी या हर्बल चाय लें। `) +
+        (proteinConsumed >= targets.proteinTargetG
+          ? `\n\n✓ आपका प्रोटीन लक्ष्य पूर्ण हो चुका है, इसलिए अतिरिक्त प्रोटीन सप्लीमेंट या भारी भोजन से बचें।`
+          : `\n\nथोड़ा प्रोटीन जोड़ने के लिए भुना चना या थोड़ा दही ले सकते हैं।`) +
+        `\n\nबताएं, आप क्या खाना पसंद करेंगे?`;
+    } else if (lang === 'hinglish') {
+      content =
+        `${profile.basic.name}, aaj aapne **~${kcalConsumed} / ${targets.calorieTarget} kcal** consume kiye hain (~${remainingKcal} kcal remaining) aur **~${proteinConsumed} / ${targets.proteinTargetG}g protein** record hua hai.\n\n` +
+        (remainingKcal > 100
+          ? `Aapke bache hue **${remainingKcal} kcal** ke liye ek light aur balanced Indian meal lijiye (jaise Moong Dal Khichdi, Lauki Sabzi + Phulke, ya Veg Soup). `
+          : `Aapka aaj ka calorie budget lagbhag pura ho chuka hai, isliye abhi bas paani/herbal tea lijiye aur heavy snacks avoid karein. `) +
+        (proteinConsumed >= targets.proteinTargetG
+          ? `\n\n✓ **Protein Target Achieved:** Aapka protein goal complete ho chuka hai (${proteinConsumed}g / ${targets.proteinTargetG}g), isliye abhi extra protein shake ya heavy paneer lene ki zaroorat nahi hai.`
+          : `\n\nThoda protein add karne ke liye roasted chana ya thoda dahi add kar sakte hain.`) +
+        `\n\nBataiye kitchen mein kya available hai ya aap kya banana chahenge?`;
+    } else {
+      content =
+        `${profile.basic.name}, today you've logged **~${kcalConsumed} of ${targets.calorieTarget} kcal** (~${remainingKcal} kcal remaining) and **~${proteinConsumed} of ${targets.proteinTargetG}g protein**.\n\n` +
+        (remainingKcal > 100
+          ? `For your remaining **${remainingKcal} kcal**, a light and balanced Indian meal fits best (such as Moong Dal Khichdi, Lauki Sabzi with Phulkas, or a warm vegetable soup). `
+          : `Your daily calorie budget is essentially complete; opt for water or herbal tea and avoid heavy night snacks. `) +
+        (proteinConsumed >= targets.proteinTargetG
+          ? `\n\n✓ **Protein Target Achieved:** You have met your protein goal (${proteinConsumed}g / ${targets.proteinTargetG}g), so extra protein shakes or heavy dishes are not needed tonight.`
+          : `\n\nTo round out protein, a small serving of roasted chana or yogurt works well.`) +
+        `\n\nLet me know what you have at home or what you'd like to prepare!`;
+    }
+  }
 
   return {
     assistantMessage: {

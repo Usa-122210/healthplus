@@ -25,28 +25,34 @@ const EXERCISE_METADATA: Record<
     focusMuscles: 'Pectorals · Triceps · Anterior Deltoid · Core',
     phaseCue: '2s Chest Lower → Firm Scapula Brace → Press Cleanly',
   },
+  glute_bridge: {
+    title: 'Supine Glute Bridge (3D Biomechanical Tempo)',
+    subtitle: 'Ribs softly tucked · drive smoothly through heels',
+    focusMuscles: 'Gluteus Maximus · Hamstrings · Lumbar Stabilizers',
+    phaseCue: 'Drive Hips Neutral → 1s Top Hold → 2s Slow Lower',
+  },
   jumping_jack: {
     title: 'Jumping Jack (3D Biomechanical Tempo)',
     subtitle: 'Full body extension · synchronized feet abduction and overhead arm arc',
-    focusMuscles: 'Deltoids · Calves · Gluteus Medius · Cardiovascular Core',
+    focusMuscles: 'Deltoids · Calves · Gluteus Medius · Core',
     phaseCue: 'Synchronized Wide Stance & Hands Overhead → Return Closed',
   },
   lunge: {
     title: 'Forward Lunge (3D Biomechanical Tempo)',
     subtitle: 'Long split stance · 90° dual knee flexion without inward collapse',
-    focusMuscles: 'Quadriceps · Hamstrings · Glutes · Ankle Stabilizers',
+    focusMuscles: 'Quadriceps · Hamstrings · Glutes',
     phaseCue: 'Controlled Forward Step → 90° Knee Bend → Drive Cleanly Up',
   },
   bicep_curl: {
     title: 'Bicep Curl (3D Biomechanical Tempo)',
     subtitle: 'Elbows pinned to flanks · smooth forearm flexion without torso swing',
-    focusMuscles: 'Biceps Brachii · Brachialis · Forearm Flexors',
+    focusMuscles: 'Biceps Brachii · Forearm Flexors',
     phaseCue: 'Full Forearm Curl to Peak Contraction → Controlled 2s Descent',
   },
   high_knees: {
     title: 'High Knees (3D Biomechanical Tempo)',
-    subtitle: 'Alternating 90° knee lift · tall upright spine and soft mid-foot landing',
-    focusMuscles: 'Hip Flexors (Psoas) · Quadriceps · Calves · Rectus Abdominis',
+    subtitle: 'Alternating 90° knee lift · tall upright spine and soft landing',
+    focusMuscles: 'Hip Flexors · Quadriceps · Calves · Core',
     phaseCue: 'Drive Knee to 90° Level → Quick Touchdown → Alternate Side',
   },
   wall_sit: {
@@ -186,12 +192,8 @@ export const KinematicHuman3D: React.FC<KinematicHuman3DProps> = ({
       metalness: 0.5,
     });
 
-    const isUpperHighlight = exerciseType === 'pushup' || exerciseType === 'bicep_curl';
-    const isLowerHighlight =
-      exerciseType === 'squat' ||
-      exerciseType === 'lunge' ||
-      exerciseType === 'high_knees' ||
-      exerciseType === 'wall_sit';
+    const isUpperHighlight = exerciseType === 'pushup';
+    const isLowerHighlight = exerciseType === 'squat' || exerciseType === 'glute_bridge';
 
     const skeletonRoot = new THREE.Group();
     scene.add(skeletonRoot);
@@ -383,67 +385,6 @@ export const KinematicHuman3D: React.FC<KinematicHuman3DProps> = ({
         rightArm.shoulderPivot.rotation.set(-1.45 - depth01 * 0.45, 0.3, 0.35);
         leftArm.elbowPivot.rotation.set(-0.15 - depth01 * 1.35, 0, 0);
         rightArm.elbowPivot.rotation.set(-0.15 - depth01 * 1.35, 0, 0);
-      } else if (exerciseType === 'jumping_jack') {
-        pelvisGroup.position.set(0, 0.96 + (depth01 > 0.5 ? 0.06 : 0), 0);
-        const legSpread = depth01 * 0.38;
-        leftLeg.hipPivot.rotation.set(0, 0, -legSpread);
-        rightLeg.hipPivot.rotation.set(0, 0, legSpread);
-        leftLeg.kneePivot.rotation.set(0.05, 0, 0);
-        rightLeg.kneePivot.rotation.set(0.05, 0, 0);
-
-        const armAbduct = depth01 * 2.35;
-        leftArm.shoulderPivot.rotation.set(0, 0, -0.15 - armAbduct);
-        rightArm.shoulderPivot.rotation.set(0, 0, 0.15 + armAbduct);
-        leftArm.elbowPivot.rotation.set(-0.1, 0, 0);
-        rightArm.elbowPivot.rotation.set(-0.1, 0, 0);
-      } else if (exerciseType === 'lunge') {
-        const drop = depth01 * 0.28;
-        pelvisGroup.position.set(0, 0.96 - drop, 0);
-        spinePivot.rotation.x = depth01 * 0.1;
-
-        leftLeg.hipPivot.rotation.set(-depth01 * 1.35, 0.04, -0.02);
-        leftLeg.kneePivot.rotation.set(depth01 * 1.55, 0, 0);
-        rightLeg.hipPivot.rotation.set(depth01 * 0.65, -0.04, 0.02);
-        rightLeg.kneePivot.rotation.set(depth01 * 1.45, 0, 0);
-
-        leftArm.shoulderPivot.rotation.set(-0.35, 0, -0.2);
-        rightArm.shoulderPivot.rotation.set(-0.35, 0, 0.2);
-        leftArm.elbowPivot.rotation.set(-0.3, 0, 0);
-        rightArm.elbowPivot.rotation.set(-0.3, 0, 0);
-      } else if (exerciseType === 'bicep_curl') {
-        pelvisGroup.position.set(0, 0.96, 0);
-        leftLeg.hipPivot.rotation.set(0.02, 0, -0.03);
-        rightLeg.hipPivot.rotation.set(0.02, 0, 0.03);
-
-        leftArm.shoulderPivot.rotation.set(-0.12, 0, -0.15);
-        rightArm.shoulderPivot.rotation.set(-0.12, 0, 0.15);
-        const curlFlex = -depth01 * 2.15;
-        leftArm.elbowPivot.rotation.set(curlFlex, 0, 0);
-        rightArm.elbowPivot.rotation.set(curlFlex, 0, 0);
-      } else if (exerciseType === 'high_knees') {
-        pelvisGroup.position.set(0, 0.96, 0);
-        const kneeRaise = depth01 * 1.6;
-        leftLeg.hipPivot.rotation.set(-kneeRaise, 0.04, -0.02);
-        leftLeg.kneePivot.rotation.set(kneeRaise * 0.95, 0, 0);
-        rightLeg.hipPivot.rotation.set(0.05, 0, 0.02);
-        rightLeg.kneePivot.rotation.set(0.05, 0, 0);
-
-        leftArm.shoulderPivot.rotation.set(depth01 * 0.6, 0, -0.15);
-        rightArm.shoulderPivot.rotation.set(-depth01 * 0.6, 0, 0.15);
-        leftArm.elbowPivot.rotation.set(-0.9, 0, 0);
-        rightArm.elbowPivot.rotation.set(-0.9, 0, 0);
-      } else if (exerciseType === 'wall_sit') {
-        pelvisGroup.position.set(0, 0.68, 0);
-        spinePivot.rotation.x = 0;
-        leftLeg.hipPivot.rotation.set(-1.57, 0.05, -0.02);
-        rightLeg.hipPivot.rotation.set(-1.57, -0.05, 0.02);
-        leftLeg.kneePivot.rotation.set(1.57, 0, 0);
-        rightLeg.kneePivot.rotation.set(1.57, 0, 0);
-
-        leftArm.shoulderPivot.rotation.set(-0.35, 0, -0.15);
-        rightArm.shoulderPivot.rotation.set(-0.35, 0, 0.15);
-        leftArm.elbowPivot.rotation.set(-0.2, 0, 0);
-        rightArm.elbowPivot.rotation.set(-0.2, 0, 0);
       } else {
         skeletonRoot.position.set(0, 0.16, -0.15);
         skeletonRoot.rotation.x = -1.52;
