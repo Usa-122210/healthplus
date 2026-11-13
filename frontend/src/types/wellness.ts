@@ -290,11 +290,19 @@ export interface LoggedMeal {
   sodiumMg: number;
   dateISO: string;
   timeLabel: string;
-  source: 'recommended_recipe' | 'quick_estimate' | 'photo_prototype_estimate';
+  source: 'recommended_recipe' | 'quick_estimate' | 'photo_prototype_estimate' | 'ai_plate_scanner';
   provenanceLabel: string;
 }
 
-export type ExerciseTypeId = 'squat' | 'pushup' | 'glute_bridge';
+export type ExerciseTypeId =
+  | 'squat'
+  | 'pushup'
+  | 'jumping_jack'
+  | 'lunge'
+  | 'bicep_curl'
+  | 'high_knees'
+  | 'wall_sit'
+  | 'glute_bridge';
 
 export interface WorkoutSession {
   id: string;

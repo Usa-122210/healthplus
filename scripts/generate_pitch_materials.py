@@ -113,47 +113,49 @@ def create_presentation(pptx_path):
         },
         {
             "tag": "5. TECHNICAL ARCHITECTURE",
-            "title": "Deep Technical Stack & Implementation",
-            "subtitle": "Frontend, 3D Engine, AI NLU, Cryptography & Serverless Infrastructure",
+            "title": "Deep Technical Stack & Dual-Engine Architecture",
+            "subtitle": "Frontend, 3D Kinematics, MediaPipe Vision, AI NLU & Serverless Infrastructure",
             "points": [
                 "Frontend: React 19.3.1, TypeScript 5.9.3, Vite 8.3 (Rolldown engine), Tailwind CSS v4 design system.",
-                "3D & Kinematics: Three.js 0.182 (3D Hero Wellness Orb, Kinematic Human Anatomical Avatar, ScanMesh 3D).",
-                "Animations: Motion (Framer Motion 12) with spring physics and accessible reduced-motion support.",
+                "3D & Kinematics: Three.js 0.187 (3D Hero Wellness Orb, Kinematic Human Anatomical Avatar with 8 exercise tempos).",
+                "Computer Vision & Pose Tracking: Google MediaPipe Pose Landmarker (33 3D landmarks, browser WebAssembly GPU runner + OpenCV native desktop coach).",
+                "Nutrition Intelligence: 574+ comprehensive Indian foods catalog + OpenCV CLAHE image preprocessor + CLIP ViT-B-32 + IsolationForest anomaly detection.",
                 "AI Orchestration: Deterministic rule-based NLU engine (aiOrchestrator.ts) with intent parsing, entity extraction, and sticky language continuity.",
-                "Serverless Backend: Node.js 24.x Vercel Serverless Functions (api/health.js, api/ai/chat.js, api/auth/*).",
+                "Serverless & Python Backend: Vercel Serverless Functions (api/health.js, api/ai/chat.js, api/nutrition/*) + Python FastAPI microservice (backend/routes/nutrition.py).",
                 "Cryptography & Auth: Node.js crypto.scryptSync (64-byte salted scrypt password hashing) + timingSafeEqual.",
-                "Voice Interface: Native Web Speech API (SpeechRecognition STT + SpeechSynthesis TTS with speed controls)."
+                "Voice Interface: Native Web Speech API (SpeechRecognition STT + SpeechSynthesis TTS with speed controls) + Windows SAPI."
             ],
-            "speech_concept": "Teammates samjho: Tech stack slide par show off karna hai ki hamara architecture scalable, zero-crash, aur lightweight hai.",
-            "speech_lines": "Start in English: 'On the engineering side, HEALTH PLUS is built with the latest enterprise web standards.'\nTransition to Hinglish: 'Sir, frontend React 19 aur TypeScript mein built hai with Vite 8 bundler. 3D exercises ke liye humne Three.js use kiya hai jo browser par directly 60 FPS par anatomical human avatar render karta hai. AI layer par humne hybrid architecture banayi hai: serverless Node.js backend ke saath ek robust client-side deterministic NLU engine jo bina internet ya bina LLM key ke bhi 100% reliably kaam karta hai. Passwords ke liye industry-standard 64-byte salted scrypt hashing implement kari hai jo timing attacks se immune hai.'"
+            "speech_concept": "Teammates samjho: Tech stack slide par show off karna hai ki hamara architecture scalable, zero-crash, aur lightweight hai with dual-engine execution.",
+            "speech_lines": "Start in English: 'On the engineering side, HEALTH PLUS is built with the latest enterprise web standards and edge AI capabilities.'\nTransition to Hinglish: 'Sir, frontend React 19 aur TypeScript mein built hai with Vite 8 bundler. 3D visual demonstration ke liye humne Three.js use kiya hai jo 60 FPS par anatomical human avatar render karta hai. Pose tracking ke liye humne Google MediaPipe Pose Landmarker integrate kiya hai jo browser mein WebAssembly se 33 body landmarks track karta hai, bina camera frames ko cloud bheje! Nutrition ke liye hamare paas 574+ Indian foods ka verified database hai with OpenCV CLAHE contrast enhancement aur IsolationForest anomaly detection. Serverless Node.js backend ke saath ek robust client-side deterministic NLU engine hai jo bina internet ya bina LLM key ke bhi 100% reliably kaam karta hai. Passwords ke liye 64-byte salted scrypt hashing implement kari hai jo timing attacks se immune hai.'"
         },
         {
-            "tag": "6. NUTRITION & CALORIE MATH",
-            "title": "Nutrition Calculation Workflow: How Does It Estimate Calories?",
-            "subtitle": "Zero Hallucination — Explicit Reference Ingredient Composition Formula",
+            "tag": "6. NUTRITION & CALORIE WORKFLOW",
+            "title": "574+ Indian Foods Database & AI Plate Scanner",
+            "subtitle": "How We Detect Food, Calculate Calories & Plan Daily Homestyle Meals",
             "points": [
-                "The Problem with AI Calorie Estimates: LLMs often guess random calories without portion grounding.",
-                "Our Solution: Every single recipe in the catalog is mathematically computed from raw reference ingredients (USDA / IFCT database standards).",
-                "Composition Formula: Total Calories = sum(Ingredient_Grams * Calories_per_Gram).",
-                "Full-Day 4-Slot Meal Plan: Pre-computes Breakfast (20%), Lunch (35%), Snack (15%), Dinner (30%) calibrated to user's daily calorie ceiling.",
-                "Smart Kitchen Grocery List: Automatically checks user's available pantry staples and generates missing items as a shopping checklist."
+                "Comprehensive 574+ Item Catalog: Curated dataset across sabzis, dals, rotis, rice, snacks, beverages, combos & mithai with verified macros (kcal, protein, carbs, fats, fiber, sodium).",
+                "Computer Vision & Preprocessing: OpenCV CLAHE contrast-limited adaptive equalization in LAB color space + Gaussian denoising to handle dim lighting.",
+                "Multi-Modal & Hinglish Logging: Instant plate photo detection + NLP parsing ('2 roti aur dal tadka khaya') mapped to catalog items.",
+                "Zero Hallucination Calorie Derivation: Energy mathematically derived from raw ingredients (4 kcal/g protein & carbs, 9 kcal/g fat).",
+                "Daily Meal Planning & Smart Grocery: 4-slot budget allocation (Breakfast 25%, Lunch 35%, Snack 10%, Dinner 30%) with missing ingredient grocery list."
             ],
             "speech_concept": "Teammates samjho: Judges ka sabse critical question hota hai: 'AI food detection aur calorie estimation kis basis par kar raha hai? Kya wo hawa mein number fek raha hai?' Iska answer yahan crystal-clear dena hai.",
-            "speech_lines": "Start in English: 'One of our most rigorous engineering contributions is deterministic nutritional composition.'\nTransition to Hinglish: 'Sir, judges aksar puchte hain ki AI calories kaise calculate kar raha hai? Humne LLM hallucination ko bilkul zero kar diya hai! Hamare catalog mein har recipe raw reference ingredients (jaise 60g Moong Dal, 40g Rice, 5g Ghee) se bani hai. Hamara foodComposition.ts engine har ingredient ke protein, carbs, fat, fiber aur sodium ko exact gram portions se mathematically multiply karta hai. Daily Plan mein hum user ke calorie ceiling ke according 4-slots (Breakfast, Lunch, Snack, Dinner) divide karte hain aur jo ingredients kitchen mein nahi hain unka live grocery checklist bana dete hain.'"
+            "speech_lines": "Start in English: 'Our nutrition intelligence is purpose-built for diverse Indian households, powered by a 574+ item verified nutritional database.'\nTransition to Hinglish: 'Sir, hamari app calories hawa mein guess nahi karti. Hamare paas 574+ Indian foods ka verified catalog hai. Jab user plate ki photo leta hai, OpenCV CLAHE preprocessor lighting ko enhance karta hai aur multi-modal vision se items detect karta hai. User Hinglish mein bhi bol sakta hai jaise '2 roti aur dal tadka'. System mathematically calories derive karta hai: 4 kcal per gram protein aur carbs, aur 9 kcal per gram fat. Aur Food Hub mein user ko 4 slots—Breakfast, Lunch, Evening Snack aur Dinner—ka customized plan milta hai, sath hi kitchen mein jo missing items hain unki automatic grocery checklist ban jaati hai!'"
         },
         {
-            "tag": "7. WORKOUT MET CALORIE WORKFLOW",
-            "title": "Exercise & Calorie Burn Calculation Workflow",
-            "subtitle": "Scientific MET (Metabolic Equivalent of Task) Formula Implementation",
+            "tag": "7. FORMWISE EXERCISE & REPETITION COUNTER",
+            "title": "Formwise: MediaPipe 7-Exercise Repetition Counter",
+            "subtitle": "Biomechanical Joint Angle Trigonometry & Real-Time Form Correction",
             "points": [
-                "Scientific Basis: Uses standardized American College of Sports Medicine (ACSM) MET equations.",
-                "Calorie Burn Formula: Calories (kcal) = Duration (mins) * (MET * 3.5 * Bodyweight (kg) / 200).",
-                "Calibrated MET Values: Bodyweight Squats = 5.5 METs | Standard Pushups = 6.0 METs | Glute Bridges & Mobility = 3.5 METs.",
-                "Interactive 3D Kinematics: Real-time pose demonstration showing knee tracking, spine alignment, and tempo.",
-                "Rapid Rep Counter: Real-time rep tracking with state-closure protection and persistent session logging."
+                "7 Core Supported Exercises: Push-up, Bodyweight Squat, Jumping Jack, Forward Lunge, Bicep Curl, High Knees, and Wall Sit (timed hold).",
+                "Mathematical Angle Formula: angle(a,b,c) = |atan2(c.y-b.y, c.x-b.x) - atan2(a.y-b.y, a.x-b.x)| with 3D joint landmark smoothing.",
+                "Hysteresis State Machine: Requires crossing both endpoints (e.g. Squat: <=105° down, >=160° up; Push-up: <=105° down, >=155° up) to prevent false reps.",
+                "Instant Form Guards: Frontal knee cave warning, hip sag body straightness check (<150°), and elbow flare detection.",
+                "Dual-Engine Execution: Real-time browser WASM PoseLandmarker with skeleton canvas overlay + Native desktop Python OpenCV app (scripts/repetition_counter/main.py).",
+                "Scientific Calorie Burn Formula: Calories (kcal) = Duration (mins) * (MET * 3.5 * Bodyweight (kg) / 200) using verified ACSM standards."
             ],
             "speech_concept": "Teammates samjho: User ne specifically pucha hai ki 'Kitna aur kitni der workout karne se kitni calorie kam hoti hai uska pura workflow de'. Yahan exact scientific formula aur values batani hain.",
-            "speech_lines": "Start in English: 'For exercise kinematics and energy expenditure, we rely on verified ACSM MET values.'\nTransition to Hinglish: 'Sir, exercise se calorie burn kaise calculate hoti hai? Hamara system ACSM ke scientifically approved MET (Metabolic Equivalent of Task) formula ko use karta hai: Calories = Time in minutes * (MET * 3.5 * User Bodyweight in kg / 200). Example ke liye: Agar ek 60 kg ka user 15 minute squats aur pushups karta hai (MET ~5.8), toh system exactly derive karta hai ~91 calories burn hui. Move Studio mein user 3D human pose dekhkar form improve karta hai aur +1 Rep click karke live session log kar sakta hai.'"
+            "speech_lines": "Start in English: 'For physical movement, we integrated Formwise: a 7-exercise MediaPipe repetition counter and biomechanical evaluator.'\nTransition to Hinglish: 'Sir, Move Studio mein 7 exercises support hoti hain: Squat, Push-up, Jumping Jack, Lunge, Bicep Curl, High Knees aur Wall Sit. MediaPipe 33 body landmarks track karta hai. Hamara trigonometry engine joint angles calculate karta hai. Hysteresis state machine ensure karti hai ki jab tak user poora range of motion complete na kare (jaise squat mein <=105° neeche aur >=160° upar), rep count nahi badhega! Agar user ki form galat hoti hai (jaise pushup mein kamar jhukna ya squat mein ghutne andar aana), toh live skeleton red ho jaata hai aur voice alert deta hai: 'Wrong form. Please correct your posture.' Aur calorie burn hum ACSM ke scientific MET formula se exact calculate karte hain!'"
         },
         {
             "tag": "8. LIVE DEMO & JUDGE WALKTHROUGH",

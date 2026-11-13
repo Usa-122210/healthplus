@@ -1,0 +1,5 @@
+opencv-python>=4.11.0
+mediapipe>=0.10.21
+numpy>=2.0.0
+Pillow>=10.0.0
+pywin32>=307; platform_system == "Windows"

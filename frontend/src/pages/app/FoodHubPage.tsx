@@ -7,7 +7,6 @@ import {
   ChefHat,
   SlidersHorizontal,
   Sparkles,
-  Camera,
   Plus,
   RefreshCw,
   Info,
@@ -22,13 +21,14 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { RecipeVisual } from '@/components/food/RecipeVisual';
+import { AiFoodScanner } from '@/components/food/AiFoodScanner';
+import { MealHistoryView } from '@/components/food/MealHistoryView';
 import { useApp } from '@/context/AppContext';
 import {
-  INGREDIENT_CATALOG,
-  NUTRITION_RECIPES,
   extractIngredientsFromText,
   getIngredientLabel,
 } from '@/engine/nutritionCatalog';
+import { INDIAN_FOOD_CATALOG } from '@/data/indianFoodCatalog';
 import { recommendMeals } from '@/engine/recommendationEngine';
 import type { IngredientKey, MealSlot } from '@/types/wellness';
 
@@ -72,12 +72,12 @@ export const FoodHubPage: React.FC<FoodHubPageProps> = ({
   );
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
   const [pantryInput, setPantryInput] = useState('');
+  const [pantrySearch, setPantrySearch] = useState('');
+  const [pantryCategory, setPantryCategory] = useState<string>('all');
+  const [pantryPageSize, setPantryPageSize] = useState<number>(48);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
-  // Honest Photo / Manual Estimator state
-  const [selectedEstimateId, setSelectedEstimateId] = useState(NUTRITION_RECIPES[2]?.id ?? '');
-  const [portionMultiplier, setPortionMultiplier] = useState(1);
-  const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
 
   const profile = state.profile;
   const targets = state.targets;
@@ -116,53 +116,30 @@ export const FoodHubPage: React.FC<FoodHubPageProps> = ({
   const handleQuickPantryParse = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pantryInput.trim()) return;
-    const detected = extractIngredientsFromText(pantryInput);
-    if (detected.length > 0) {
+    const lower = pantryInput.toLowerCase();
+    const basicDetected = extractIngredientsFromText(pantryInput);
+    const catalogDetected = INDIAN_FOOD_CATALOG.filter(
+      (f) =>
+        lower.includes(f.name.toLowerCase()) ||
+        f.aliases.some((a) => lower.includes(a.toLowerCase()))
+    ).map((f) => f.name as IngredientKey);
+
+    const allDetected = Array.from(new Set([...basicDetected, ...catalogDetected]));
+    if (allDetected.length > 0) {
       updateFoodAvailability(
-        Array.from(new Set([...available, ...detected])),
-        unavailable.filter((item) => !detected.includes(item))
+        Array.from(new Set([...available, ...allDetected])),
+        unavailable.filter((item) => !allDetected.includes(item))
       );
       showToast(
-        `Kitchen updated with ${detected.map((k) => getIngredientLabel(k).split(' / ')[0]).join(', ')}`
+        `Kitchen updated with ${allDetected.length} items (${allDetected.slice(0, 3).map((k) => getIngredientLabel(k).split(' / ')[0]).join(', ')}${allDetected.length > 3 ? '...' : ''})`
       );
     } else {
-      showToast('Try naming common Indian ingredients like dal, curd, paneer, soya, rice, eggs.');
+      showToast('Try naming any Indian food, vegetable, fruit, dal or snack.');
     }
     setPantryInput('');
   };
 
-  const estimateTemplate =
-    NUTRITION_RECIPES.find((r) => r.id === selectedEstimateId) ?? NUTRITION_RECIPES[0];
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setUploadedPreviewUrl(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleLogEstimatedMeal = () => {
-    if (!estimateTemplate) return;
-    logMeal({
-      recipeId: estimateTemplate.id,
-      name: `${estimateTemplate.name} (${portionMultiplier}x portion)`,
-      mealSlot: activeMealSlot,
-      calories: Math.round(estimateTemplate.macros.calories * portionMultiplier),
-      proteinG: Math.round(estimateTemplate.macros.proteinG * portionMultiplier),
-      carbsG: Math.round(estimateTemplate.macros.carbsG * portionMultiplier),
-      fatG: Math.round(estimateTemplate.macros.fatG * portionMultiplier),
-      fiberG: Number((estimateTemplate.macros.fiberG * portionMultiplier).toFixed(1)),
-      sodiumMg: Math.round(estimateTemplate.macros.sodiumMg * portionMultiplier),
-      source: uploadedPreviewUrl ? 'photo_prototype_estimate' : 'quick_estimate',
-      provenanceLabel: 'Prototype portion-weighted kitchen estimate',
-    });
-    showToast(`Logged ${estimateTemplate.name} to Today's record.`);
-  };
 
   return (
     <div className="space-y-6 pb-20 text-left animate-fadeIn max-w-6xl mx-auto">
@@ -555,23 +532,78 @@ export const FoodHubPage: React.FC<FoodHubPageProps> = ({
         </div>
       )}
 
-      {/* TAB 2: DAILY KITCHEN AVAILABILITY */}
-      {tab === 'pantry' && (
-        <Card variant="elevated" className="p-5 sm:p-6">
-          <h2 className="font-heading font-bold text-base text-forest dark:text-white mb-4">
-            What&apos;s Available at Home Today
-          </h2>
-          <div className="space-y-4">
-            <p className="text-xs text-forest/75 dark:text-ivory/75">
-              Tap ingredients to mark them available or out of stock. Both Food Hub and your AI Coach immediately adapt around this list.
-            </p>
+      {/* TAB 2: DAILY KITCHEN AVAILABILITY & 574+ FOOD DATABASE */}
+      {tab === 'pantry' && (() => {
+        const PANTRY_CATEGORIES = [
+          { id: 'all', label: 'All Items', count: 574 },
+          { id: 'sabzi', label: 'Veggies & Sabzis', count: 87 },
+          { id: 'fruit', label: 'Fresh Fruits', count: 27 },
+          { id: 'dal', label: 'Dals & Legumes', count: 27 },
+          { id: 'bread', label: 'Breads & Roti', count: 27 },
+          { id: 'rice', label: 'Rice & Biryani', count: 30 },
+          { id: 'snack', label: 'Snacks & Chaat', count: 98 },
+          { id: 'beverage', label: 'Drinks & Shakes', count: 57 },
+          { id: 'sauce', label: 'Sauces & Chutneys', count: 18 },
+          { id: 'dairy', label: 'Dairy & Plant Milk', count: 15 },
+          { id: 'combo', label: 'Combos & Thalis', count: 71 },
+          { id: 'non-veg', label: 'Non-Veg & Seafood', count: 32 },
+          { id: 'sweet', label: 'Sweets & Mithai', count: 36 },
+        ];
 
+        const filteredPantryItems = INDIAN_FOOD_CATALOG.filter((item) => {
+          const matchesCat =
+            pantryCategory === 'all' ||
+            (pantryCategory === 'sabzi' && (item.category === 'sabzi' || item.category === 'vegetable')) ||
+            item.category === pantryCategory;
+
+          const q = pantrySearch.trim().toLowerCase();
+          if (!q) return matchesCat;
+
+          return (
+            matchesCat &&
+            (item.name.toLowerCase().includes(q) ||
+              item.region.toLowerCase().includes(q) ||
+              item.servingUnit.toLowerCase().includes(q) ||
+              item.aliases.some((a) => a.toLowerCase().includes(q)))
+          );
+        });
+
+        return (
+          <Card variant="elevated" className="p-5 sm:p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-heading font-bold text-base sm:text-lg text-forest dark:text-white">
+                    What&apos;s Available at Home Today
+                  </h2>
+                  <Badge variant="emerald" size="sm">
+                    ✨ 574+ Verified Indian Foods &amp; Ingredients
+                  </Badge>
+                </div>
+                <p className="text-xs text-forest/75 dark:text-ivory/75 mt-1">
+                  Tap any vegetable, fruit, sauce, drink, grain or dish to mark it available or out of stock. Both Food Hub and your AI Coach adapt immediately.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 text-xs">
+                <span className="px-3 py-1 rounded-full bg-emerald/15 text-emerald font-bold">
+                  {available.length} In Kitchen ✓
+                </span>
+                {unavailable.length > 0 && (
+                  <span className="px-3 py-1 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-300 font-bold">
+                    {unavailable.length} Out of Stock ✕
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Natural language quick kitchen update */}
             <form onSubmit={handleQuickPantryParse} className="flex gap-2">
               <input
                 type="text"
                 value={pantryInput}
                 onChange={(e) => setPantryInput(e.target.value)}
-                placeholder="Type what you have right now, e.g. 'dal, curd, soya, tomato, rice'"
+                placeholder="Type what you have right now, e.g. 'dal, curd, soya, tomato, jamun, mango, paneer, oats'"
                 className="flex-1 rounded-xl border border-forest/15 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2 text-xs text-forest dark:text-white"
               />
               <Button type="submit" size="sm">
@@ -579,34 +611,130 @@ export const FoodHubPage: React.FC<FoodHubPageProps> = ({
               </Button>
             </form>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {INGREDIENT_CATALOG.map((ing) => {
-                const isAvail = available.includes(ing.key);
-                const isUnavail = unavailable.includes(ing.key);
-                return (
+            {/* Search and Category Filters */}
+            <div className="space-y-3 pt-2 border-t border-forest/10 dark:border-white/10">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={pantrySearch}
+                  onChange={(e) => setPantrySearch(e.target.value)}
+                  placeholder="🔍 Search across 574+ vegetables, fruits, sauces, dals, breads, drinks..."
+                  className="flex-1 rounded-xl border border-forest/15 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2 text-xs text-forest dark:text-white"
+                />
+                {pantrySearch && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPantrySearch('')}
+                  >
+                    Clear Search
+                  </Button>
+                )}
+              </div>
+
+              {/* Category Pills */}
+              <div className="flex flex-wrap gap-1.5 overflow-x-auto pb-1">
+                {PANTRY_CATEGORIES.map((cat) => (
                   <button
-                    key={ing.key}
+                    key={cat.id}
                     type="button"
-                    onClick={() => handleToggleIngredient(ing.key)}
-                    className={`p-2.5 rounded-xl border text-left text-xs font-semibold transition-all ${
-                      isAvail
-                        ? 'bg-emerald/15 border-emerald text-forest dark:text-white'
-                        : isUnavail
-                          ? 'bg-rose-500/12 border-rose-500/30 text-rose-700 dark:text-rose-300'
-                          : 'bg-forest/4 dark:bg-white/5 border-forest/10 dark:border-white/10 text-forest/70 dark:text-ivory/70'
+                    onClick={() => {
+                      setPantryCategory(cat.id);
+                      setPantryPageSize(48);
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                      pantryCategory === cat.id
+                        ? 'bg-forest text-white dark:bg-emerald dark:text-white border-forest dark:border-emerald shadow-sm'
+                        : 'bg-white/70 dark:bg-white/5 border-forest/10 dark:border-white/10 text-forest/75 dark:text-ivory/75 hover:bg-emerald/10'
                     }`}
                   >
-                    <div className="truncate">{ing.label.split(' / ')[0]}</div>
-                    <div className="text-[10px] opacity-75">
-                      {isAvail ? 'In kitchen ✓' : isUnavail ? 'Marked out ✕' : 'Tap to add'}
+                    {cat.label} ({cat.count})
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Results Header */}
+            <div className="flex items-center justify-between text-xs text-forest/70 dark:text-ivory/70 pt-1">
+              <span>
+                Showing <strong>{Math.min(filteredPantryItems.length, pantryPageSize)}</strong> of{' '}
+                <strong>{filteredPantryItems.length}</strong> matching food items
+              </span>
+              {filteredPantryItems.length > pantryPageSize && (
+                <button
+                  type="button"
+                  onClick={() => setPantryPageSize((prev) => prev + 96)}
+                  className="text-emerald font-semibold hover:underline"
+                >
+                  Load More Items
+                </button>
+              )}
+            </div>
+
+            {/* Food Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+              {filteredPantryItems.slice(0, pantryPageSize).map((food) => {
+                const isAvail =
+                  available.includes(food.name as IngredientKey) ||
+                  available.includes(food.id as IngredientKey);
+                const isUnavail =
+                  unavailable.includes(food.name as IngredientKey) ||
+                  unavailable.includes(food.id as IngredientKey);
+
+                return (
+                  <button
+                    key={food.id}
+                    type="button"
+                    onClick={() => handleToggleIngredient(food.name as IngredientKey)}
+                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 ${
+                      isAvail
+                        ? 'bg-emerald/15 border-emerald text-forest dark:text-white shadow-sm ring-1 ring-emerald'
+                        : isUnavail
+                          ? 'bg-rose-500/12 border-rose-500/30 text-rose-700 dark:text-rose-300'
+                          : 'bg-forest/4 dark:bg-white/5 border-forest/10 dark:border-white/10 text-forest/75 dark:text-ivory/75 hover:bg-forest/8'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="font-bold text-xs truncate text-forest dark:text-white">
+                          {food.name}
+                        </span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald/20 text-emerald shrink-0">
+                          {food.calories} kcal
+                        </span>
+                      </div>
+                      <div className="text-[11px] opacity-70 line-clamp-1">
+                        {food.servingUnit}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-forest/8 dark:border-white/8">
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                        {food.proteinG}g protein
+                      </span>
+                      <span className="font-bold">
+                        {isAvail ? 'In kitchen ✓' : isUnavail ? 'Marked out ✕' : '+ Add'}
+                      </span>
                     </div>
                   </button>
                 );
               })}
             </div>
-          </div>
-        </Card>
-      )}
+
+            {filteredPantryItems.length > pantryPageSize && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPantryPageSize((prev) => prev + 96)}
+                >
+                  Show More ({filteredPantryItems.length - pantryPageSize} remaining)
+                </Button>
+              </div>
+            )}
+          </Card>
+        );
+      })()}
 
       {/* TAB 1B: STRUCTURED DAILY MEAL PLAN & AUTOMATIC GROCERY LIST */}
       {tab === 'plan_grocery' && (
@@ -775,106 +903,58 @@ export const FoodHubPage: React.FC<FoodHubPageProps> = ({
         </div>
       )}
 
-      {/* TAB 3: LOGGED MEALS & HONEST PROTOTYPE PHOTO ESTIMATOR */}
+      {/* TAB 3: LOGGED MEALS & AI INDIAN PLATE SCANNER */}
       {tab === 'log' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card variant="elevated" className="p-5 sm:p-6">
-            <h2 className="font-heading font-bold text-base text-forest dark:text-white mb-4">
-              Log a Home Meal / Visual Estimator
-            </h2>
-            <div className="space-y-4">
-              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-[11px] text-forest dark:text-ivory/90">
-                <strong>Honest Prototype Note:</strong> Automated live image classification is disabled in offline mode. Upload a plate photo for your visual diary and choose the closest Indian dish + portion size using standardized prototype home-portion estimates.
-              </div>
+        <div className="space-y-6">
+          {/* AI Indian Food Scanner & Hinglish Logger */}
+          <AiFoodScanner
+            onMealLogged={() => {
+              setHistoryRefreshKey((k) => k + 1);
+              showToast('Meal successfully logged & daily macros updated!');
+            }}
+          />
 
-              <div>
-                <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-forest/15 dark:border-white/15 bg-forest/5 dark:bg-white/5 text-xs font-semibold cursor-pointer text-forest dark:text-white">
-                  <Camera className="w-4 h-4 text-emerald" />
-                  <span>{uploadedPreviewUrl ? 'Change Plate Photo' : 'Attach Meal Photo (Local Only)'}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                </label>
-                {uploadedPreviewUrl && (
-                  <img
-                    src={uploadedPreviewUrl}
-                    alt="Uploaded meal plate"
-                    className="mt-3 w-full h-40 object-cover rounded-2xl border border-forest/10 dark:border-white/10"
-                  />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card variant="elevated" className="p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-heading font-bold text-base text-forest dark:text-white">
+                  Meals Logged Today ({mealsToday.length})
+                </h2>
+                <Badge variant="emerald">{activeMealSlot}</Badge>
+              </div>
+              <div className="space-y-3">
+                {mealsToday.length === 0 ? (
+                  <div className="p-6 text-center rounded-2xl bg-forest/4 dark:bg-white/5 text-xs text-forest/70 dark:text-ivory/70">
+                    No meals logged yet today. Use the AI Indian plate scanner above or enter Hinglish text to log your meal.
+                  </div>
+                ) : (
+                  mealsToday.map((meal) => (
+                    <div
+                      key={meal.id}
+                      className="p-3 rounded-2xl border border-forest/10 dark:border-white/10 bg-white/70 dark:bg-white/5 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-forest dark:text-white">{meal.name}</p>
+                        <p className="text-[11px] text-forest/65 dark:text-ivory/65 capitalize">
+                          {meal.mealSlot} · {meal.timeLabel} · {meal.provenanceLabel}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-extrabold text-emerald dark:text-emerald-400">
+                          {meal.calories} kcal
+                        </p>
+                        <p className="text-[10px] text-forest/60 dark:text-ivory/60">
+                          {meal.proteinG}g P · {meal.fiberG}g Fib
+                        </p>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
+            </Card>
 
-              <div>
-                <label className="block text-xs font-semibold text-forest dark:text-ivory mb-1.5">
-                  Select Indian Dish Baseline
-                </label>
-                <select
-                  value={selectedEstimateId}
-                  onChange={(e) => setSelectedEstimateId(e.target.value)}
-                  className="w-full rounded-xl border border-forest/15 dark:border-white/15 bg-white dark:bg-[#0A1E17] px-3 py-2 text-xs text-forest dark:text-white"
-                >
-                  {NUTRITION_RECIPES.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} (~{r.macros.calories} kcal)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-forest dark:text-ivory mb-1.5">
-                  Portion Scale: <strong>{portionMultiplier}x</strong> (~
-                  {Math.round((estimateTemplate?.macros.calories ?? 0) * portionMultiplier)} kcal)
-                </label>
-                <input
-                  type="range"
-                  min={0.5}
-                  max={2}
-                  step={0.25}
-                  value={portionMultiplier}
-                  onChange={(e) => setPortionMultiplier(Number(e.target.value))}
-                  className="w-full accent-emerald"
-                />
-              </div>
-
-              <Button onClick={handleLogEstimatedMeal} leftIcon={<Plus className="w-4 h-4" />}>
-                Add Meal to Today ({activeMealSlot})
-              </Button>
-            </div>
-          </Card>
-
-          <Card variant="elevated" className="p-5 sm:p-6">
-            <h2 className="font-heading font-bold text-base text-forest dark:text-white mb-4">
-              Meals Logged Today
-            </h2>
-            <div className="space-y-3">
-              {mealsToday.length === 0 ? (
-                <div className="p-6 text-center rounded-2xl bg-forest/4 dark:bg-white/5 text-xs text-forest/70 dark:text-ivory/70">
-                  No meals logged yet today. Log one of your recommended meals or add an entry when you eat.
-                </div>
-              ) : (
-                mealsToday.map((meal) => (
-                  <div
-                    key={meal.id}
-                    className="p-3 rounded-2xl border border-forest/10 dark:border-white/10 bg-white/70 dark:bg-white/5 flex items-center justify-between gap-3"
-                  >
-                    <div>
-                      <p className="text-xs font-bold text-forest dark:text-white">{meal.name}</p>
-                      <p className="text-[11px] text-forest/65 dark:text-ivory/65 capitalize">
-                        {meal.mealSlot} · {meal.timeLabel} · {meal.provenanceLabel}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs font-extrabold text-emerald dark:text-emerald-400">
-                        {meal.calories} kcal
-                      </p>
-                      <p className="text-[10px] text-forest/60 dark:text-ivory/60">
-                        {meal.proteinG}g P · {meal.fiberG}g Fib
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
+            <MealHistoryView refreshTrigger={historyRefreshKey} />
+          </div>
         </div>
       )}
     </div>
