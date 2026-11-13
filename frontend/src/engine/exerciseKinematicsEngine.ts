@@ -696,75 +696,17 @@ export class WallSitAnalyzer extends Analyzer {
   }
 }
 
-export class GluteBridgeAnalyzer extends Analyzer {
-  info: ExerciseInfo = {
-    id: 'glute_bridge',
-    name: 'Glute Bridge',
-    cameraHint: 'Side view · floor mat visible',
-    instruction: 'Lie on your back, knees bent, drive hips up until body forms a straight line.',
-  };
-
-  private hipValues: number[] = [];
-
-  constructor() {
-    super();
-    this.reset();
-  }
-
-  override reset(): void {
-    super.reset();
-    this.hipValues = [];
-    this.phase = 'down';
-  }
-
-  evaluate(points: Point2D[] | null): Evaluation {
-    const side = Analyzer.visibleSide(points || []);
-    if (!side) {
-      return { label: 'LIE ON MAT (SIDE VIEW)', sustainedBad: false };
-    }
-
-    const rawHip = angle(side.shoulder, side.hip, side.knee);
-    this.hipValues.push(rawHip);
-    if (this.hipValues.length > 5) this.hipValues.shift();
-    const hipAngle = mean(this.hipValues);
-
-    const up = hipAngle >= 165;
-    const down = hipAngle <= 130;
-
-    if (this.phase === 'down' && up) {
-      this.phase = 'up';
-    } else if (this.phase === 'up' && down) {
-      this.phase = 'down';
-      this.finishRep(false);
-    }
-
-    return {
-      label: this.phase === 'up' ? 'BRIDGE TOP: SQUEEZE GLUTES' : 'LOWER WITH CONTROL',
-      sustainedBad: false,
-      primary: hipAngle,
-      primaryName: 'Hip',
-    };
-  }
-}
+export const EXERCISES_REGISTRY: Record<string, () => Analyzer> = {
+  pushup: () => new PushUpAnalyzer(),
+  squat: () => new SquatAnalyzer(),
+  jumping_jack: () => new JumpingJackAnalyzer(),
+  lunge: () => new ForwardLungeAnalyzer(),
+  bicep_curl: () => new BicepCurlAnalyzer(),
+  high_knees: () => new HighKneesAnalyzer(),
+  wall_sit: () => new WallSitAnalyzer(),
+};
 
 export function createAnalyzer(exerciseId: string): Analyzer {
-  switch (exerciseId) {
-    case 'pushup':
-      return new PushUpAnalyzer();
-    case 'squat':
-      return new SquatAnalyzer();
-    case 'jumping_jack':
-      return new JumpingJackAnalyzer();
-    case 'lunge':
-      return new ForwardLungeAnalyzer();
-    case 'bicep_curl':
-      return new BicepCurlAnalyzer();
-    case 'high_knees':
-      return new HighKneesAnalyzer();
-    case 'wall_sit':
-      return new WallSitAnalyzer();
-    case 'glute_bridge':
-    default:
-      return new GluteBridgeAnalyzer();
-  }
+  const factory = EXERCISES_REGISTRY[exerciseId];
+  return factory ? factory() : new PushUpAnalyzer();
 }

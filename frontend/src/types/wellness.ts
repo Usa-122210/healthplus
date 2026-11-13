@@ -295,14 +295,13 @@ export interface LoggedMeal {
 }
 
 export type ExerciseTypeId =
-  | 'squat'
   | 'pushup'
+  | 'squat'
   | 'jumping_jack'
   | 'lunge'
   | 'bicep_curl'
   | 'high_knees'
-  | 'wall_sit'
-  | 'glute_bridge';
+  | 'wall_sit';
 
 export interface WorkoutSession {
   id: string;

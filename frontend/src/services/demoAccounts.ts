@@ -226,8 +226,8 @@ export function buildDemoInitialState(
       workoutsLogged: [
         {
           id: 'demo-gw-w1',
-          exerciseType: 'glute_bridge',
-          exerciseLabel: 'Glute Bridges (Demo Sample)',
+          exerciseType: 'lunge',
+          exerciseLabel: 'Forward Lunges (Demo Sample)',
           repsCompleted: 12,
           targetReps: 12,
           durationSeconds: 180,
@@ -614,8 +614,8 @@ export function buildDemoInitialState(
     workoutsLogged: [
       {
         id: 'demo-diet-w1',
-        exerciseType: 'glute_bridge',
-        exerciseLabel: 'Glute Bridges & Core Stability (Demo Sample)',
+        exerciseType: 'wall_sit',
+        exerciseLabel: 'Wall Sit Hold (Demo Sample)',
         repsCompleted: 15,
         targetReps: 15,
         durationSeconds: 210,

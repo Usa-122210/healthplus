@@ -55,12 +55,6 @@ const EXERCISE_METADATA: Record<
     focusMuscles: 'Quadriceps Isometric · Gluteal Complex · Core Bracing',
     phaseCue: 'Lock 90° Knee & Hip Angle → Sustained Isometric Hold',
   },
-  glute_bridge: {
-    title: 'Supine Glute Bridge (3D Biomechanical Tempo)',
-    subtitle: 'Ribs softly tucked · drive smoothly through heels',
-    focusMuscles: 'Gluteus Maximus · Hamstrings · Lumbar Stabilizers',
-    phaseCue: 'Drive Hips Neutral → 1s Top Hold → 2s Slow Lower',
-  },
 };
 
 function createLimbMesh(
@@ -192,8 +186,12 @@ export const KinematicHuman3D: React.FC<KinematicHuman3DProps> = ({
       metalness: 0.5,
     });
 
-    const isUpperHighlight = exerciseType === 'pushup';
-    const isLowerHighlight = exerciseType === 'squat' || exerciseType === 'glute_bridge';
+    const isUpperHighlight = exerciseType === 'pushup' || exerciseType === 'bicep_curl';
+    const isLowerHighlight =
+      exerciseType === 'squat' ||
+      exerciseType === 'lunge' ||
+      exerciseType === 'high_knees' ||
+      exerciseType === 'wall_sit';
 
     const skeletonRoot = new THREE.Group();
     scene.add(skeletonRoot);
