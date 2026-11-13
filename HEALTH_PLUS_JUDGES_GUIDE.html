@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HEALTH PLUS — Judges Presentation Guide & System Architecture</title>
+  <style>
+    :root {
+      --bg: #071612;
+      --card-bg: #0C211B;
+      --surface: #102B23;
+      --forest: #032018;
+      --emerald: #10B981;
+      --emerald-light: #34D399;
+      --gold: #F59E0B;
+      --ivory: #FAF9F5;
+      --muted: #A7BFA8;
+      --border: rgba(255, 255, 255, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ivory);
+      line-height: 1.6;
+      padding: 30px 20px 80px 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      padding: 40px 20px;
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      margin-bottom: 40px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--emerald);
+      color: var(--emerald-light);
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 38px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .tagline { font-size: 18px; color: var(--muted); font-style: italic; margin-bottom: 20px; }
+    .meta-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .meta-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--ivory);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .meta-links a:hover {
+      background: var(--emerald);
+      color: #000;
+      border-color: var(--emerald);
+    }
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ivory);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    h3 { font-size: 17px; font-weight: 700; color: var(--emerald-light); margin: 20px 0 10px 0; }
+    p, li { color: #D1DED2; font-size: 14.5px; margin-bottom: 10px; }
+    ul, ol { padding-left: 22px; margin-bottom: 15px; }
+    .flow-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px dashed var(--emerald);
+      border-radius: 14px;
+      padding: 20px;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--emerald-light);
+      white-space: pre-wrap;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 13.5px;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    th { background: rgba(16, 185, 129, 0.15); color: var(--emerald-light); font-weight: 700; }
+    tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 15px 0;
+    }
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .demo-card h4 { font-size: 16px; color: var(--ivory); margin-bottom: 6px; }
+    .demo-card .pill {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--gold);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .creds {
+      background: rgba(0,0,0,0.4);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--emerald-light);
+      margin-top: 8px;
+    }
+    .pitch-step {
+      background: var(--surface);
+      border-left: 4px solid var(--emerald);
+      padding: 16px 20px;
+      border-radius: 0 14px 14px 0;
+      margin-bottom: 14px;
+    }
+    .pitch-step strong { color: var(--gold); }
+    .qa-box {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+    }
+    .qa-box .q { font-weight: 700; color: var(--emerald-light); margin-bottom: 6px; }
+    .qa-box .a { color: #E5E7EB; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Hackathon & Evaluation Guide</div>
+      <h1>HEALTH PLUS</h1>
+      <div class="tagline">"Observe. Understand. Guide."</div>
+      <div class="meta-links">
+        <a href="https://healthplus-iota.vercel.app" target="_blank">🌐 Live Production App</a>
+        <a href="https://github.com/Usa-122210/healthplus" target="_blank">💻 GitHub Repository</a>
+        <a href="https://healthplus-iota.vercel.app/api/health" target="_blank">⚡ API Health Check</a>
+      </div>
+    </header>
+
+    <!-- SECTION 1 -->
+    <div class="section-card">
+      <h2>1. Problem Statement & Core Innovation</h2>
+      <p><strong>The Problem:</strong> Existing health apps overwhelm users with dozens of disconnected graphs and generic chatbots that give template advice and forget previous answers. Information entered during onboarding is not shared across food, movement, and progress.</p>
+      <p><strong>The Solution:</strong> <strong>HEALTH PLUS</strong> is built as <strong>ONE connected, living AI wellness companion</strong>:</p>
+      <ul>
+        <li><strong>Understands Before Prescribing:</strong> An 8-stage clinical onboarding interview discovers lifestyle, regional Indian cuisine, kitchen setup, budget, allergies, and health conditions.</li>
+        <li><strong>Clinical Safety & Grounded Nutrition:</strong> Targets use Mifflin-St Jeor formulas, 1200 kcal clinical floors, hypertension sodium bounds, and renal protein ceilings.</li>
+        <li><strong>Connected 5-Pillar Architecture:</strong> <em>Today</em>, <em>Food Hub</em>, <em>Move Studio</em>, <em>AI Coach</em>, and <em>Progress</em> all share the exact same user state and memory in real time.</li>
+        <li><strong>Natural Hinglish Voice Companion:</strong> STT/TTS with automatic language detection, rejection reasoning, and pantry memory.</li>
+      </ul>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="section-card">
+      <h2>2. Complete System Workflow</h2>
+      <div class="flow-box">USER VISITS LANDING PAGE (/)
+     ↓
+AUTHENTICATION GATEWAY (/login, /signup, or 3 Pre-Seeded Demo Accounts)
+     ↓
+CONVERSATIONAL AI ONBOARDING (8 Adaptive Clinical Stages)
+     ↓
+CLINICAL TARGETS GENERATION (BMR, TDEE, Safe Macro Floors)
+     ↓
+CONNECTED 5-PILLAR EXPERIENCE:
+ ├── [TODAY]       : 1 Calm AI Summary Line + 1 Clear Next Action + Hydration + Streak
+ ├── [FOOD HUB]    : Safe Recipes + Derived Macros + Daily Indian Plan + Grocery Checklist
+ ├── [MOVE STUDIO] : 3D Kinematic Human Pose Avatar + Guided Form Cues + Rep Counter
+ ├── [AI COACH]    : Hinglish Voice Companion + Rejection Reasoning + Pantry Substitution
+ └── [PROGRESS]    : Multi-Day Baseline Corridor + Rolling Averages + Rep Charts</div>
+    </div>
+
+    <!-- SECTION 3 -->
+    <div class="section-card">
+      <h2>3. Technical Stack (Kis Chiz Ke Liye Kya Use Kiya)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Module / Feature</th>
+            <th>Technology Used</th>
+            <th>Implementation Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Frontend Framework</strong></td>
+            <td>React 19.3 + TypeScript 5.9</td>
+            <td>Concurrent rendering, clean lifecycle, strong type safety.</td>
+          </tr>
+          <tr>
+            <td><strong>Bundler & Build</strong></td>
+            <td>Vite 8.3 + Rolldown</td>
+            <td>Sub-second HMR, optimized chunking, zero build warnings.</td>
+          </tr>
+          <tr>
+            <td><strong>Design System</strong></td>
+            <td>Tailwind CSS v4</td>
+            <td>Warm Ivory Light Mode (#FAF9F5) & Deep Forest Dark Mode (#05130F).</td>
+          </tr>
+          <tr>
+            <td><strong>3D Graphics & Pose</strong></td>
+            <td>Three.js 0.182</td>
+            <td>3D Hero Wellness Orb & Kinematic Human anatomical avatar.</td>
+          </tr>
+          <tr>
+            <td><strong>Animations</strong></td>
+            <td>Motion (Framer Motion)</td>
+            <td>Spring physics, backdrop glows, drawer transitions.</td>
+          </tr>
+          <tr>
+            <td><strong>State Management</strong></td>
+            <td>React Context API</td>
+            <td>Central AppContext connects Today, Food, Move, Coach & Progress.</td>
+          </tr>
+          <tr>
+            <td><strong>Client AI Engine (NLU)</strong></td>
+            <td>Deterministic Rule Engine</td>
+            <td>aiOrchestrator.ts — intent parsing, Hinglish continuity, rejection reasoning.</td>
+          </tr>
+          <tr>
+            <td><strong>Clinical Nutrition Math</strong></td>
+            <td>Mifflin-St Jeor / USDA Math</td>
+            <td>BMR/TDEE calculation, 1200 kcal floor, hypertension sodium limit.</td>
+          </tr>
+          <tr>
+            <td><strong>Backend Serverless</strong></td>
+            <td>Node.js 24.x (Vercel Functions)</td>
+            <td>api/health.js, api/ai/chat.js, api/auth/*.</td>
+          </tr>
+          <tr>
+            <td><strong>Authentication & Security</strong></td>
+            <td>Node.js crypto.scryptSync</td>
+            <td>64-byte salted scrypt password hashing, timing-safe equality.</td>
+          </tr>
+          <tr>
+            <td><strong>Voice Interface</strong></td>
+            <td>Web Speech API</td>
+            <td>Browser-native SpeechRecognition (STT) + SpeechSynthesis (TTS).</td>
+          </tr>
+          <tr>
+            <td><strong>Data Persistence</strong></td>
+            <td>Dual Storage (Local + Session)</td>
+            <td>Per-email isolated JSON vaults (healthplus_vault_v1:&lt;email&gt;).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="section-card">
+      <h2>4. Pre-Created Demo Accounts for Judges</h2>
+      <p>Judges do not need to register. They can log in immediately from the <em>"Explore HEALTH PLUS"</em> section:</p>
+      <div class="demo-grid">
+        <div class="demo-card">
+          <h4>1. General Wellness</h4>
+          <span class="pill">Meera Nair (Demo)</span>
+          <p>Balanced energy, vegetable poha & khichdi logs, gentle mobility.</p>
+          <div class="creds">
+            <strong>Email:</strong> demo@healthplus.app<br>
+            <strong>Pass:</strong> Demo@12345
+          </div>
+        </div>
+        <div class="demo-card">
+          <h4>2. Fitness & Strength</h4>
+          <span class="pill">Rohan Verma (Demo)</span>
+          <p>Muscle gain, high protein, 3-egg bhurji & soya bowl logs, goblet squats.</p>
+          <div class="creds">
+            <strong>Email:</strong> fitness@healthplus.app<br>
+            <strong>Pass:</strong> Fitness@123
+          </div>
+        </div>
+        <div class="demo-card">
+          <h4>3. Dietary Restrictions</h4>
+          <span class="pill">Diya Kulkarni (Demo)</span>
+          <p>Pure Vegetarian, Dairy-free & Gluten-free screening active, chilla & tofu logs.</p>
+          <div class="creds">
+            <strong>Email:</strong> diet@healthplus.app<br>
+            <strong>Pass:</strong> Diet@12345
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5 -->
+    <div class="section-card">
+      <h2>5. Three-Minute Live Demo Pitch Script (Judges ke saamne kya bolna hai)</h2>
+      
+      <div class="pitch-step">
+        <strong>Minute 1: The Hook & Core Problem (Landing Page)</strong><br>
+        <em>"Namaste Judges! Today's health apps are broken. They overwhelm users with 50 disconnected charts and chatbots that forget what you said two seconds ago. We built <strong>HEALTH PLUS: Observe. Understand. Guide.</strong> It is not another dashboard. It is a connected, living AI wellness companion designed specifically for Indian lifestyles and clinical safety."</em>
+      </div>
+
+      <div class="pitch-step">
+        <strong>Minute 2: Demo Login & Connected 5 Pillars (Today, Food, Move)</strong><br>
+        <em>"(Click Sign In -> Click Continue as General Wellness Demo)<br>
+        To let judges test immediately, we built 3 pre-seeded demo accounts using real salted password verification.<br>
+        1. <strong>TODAY:</strong> Look at this screen—just <strong>1 calm AI summary line</strong> and <strong>1 single next important action</strong>.<br>
+        2. <strong>FOOD HUB:</strong> Tailored to Indian kitchens. Notice the 'Daily Plan & Grocery' tab pre-computes a safe 4-slot Indian meal plan and grocery checklist.<br>
+        3. <strong>MOVE STUDIO:</strong> Three.js 3D kinematic human avatar demonstrates squats with real biomechanics cues and rep tracking."</em>
+      </div>
+
+      <div class="pitch-step">
+        <strong>Minute 3: The "WOW" AI Coach Demonstration (Language & Reasoning)</strong><br>
+        <em>"(Open AI Coach and type/speak in Hinglish)<br>
+        1. <strong>Rejection Reasoning:</strong> Type: 'Mujhe dinner mein paneer bhurji nahi khani.' (AI asks: 'Kyun? Mood nahi hai ya paneer ghar par nahi hai?')<br>
+        2. <strong>Pantry Memory:</strong> Type: 'Paneer nahi hai. Dahi aur dal available hai.' (AI excludes paneer and suggests safe Dal Tadka / Curd Rice!)<br>
+        3. <strong>Connected Math:</strong> Type: 'How much protein is left today?' (AI reads today's Food Hub meals and calculates exact remaining grams live!)<br>
+        HEALTH PLUS works in English, Hindi, and Hinglish with zero toggles and enforces clinical safety. Thank you!"</em>
+      </div>
+    </div>
+
+    <!-- SECTION 6 -->
+    <div class="section-card">
+      <h2>6. Judges' Tough Questions & Ready Winning Answers</h2>
+      <div class="qa-box">
+        <div class="q">Q1: "Is the AI hallucinating nutrition numbers, or are they verified?"</div>
+        <div class="a"><strong>Answer:</strong> "Every recipe has explicit gram portions and derived macros computed through our deterministic ingredient composition formula (foodComposition.ts). Daily targets use Mifflin-St Jeor clinical equations enforcing a strict 1200 kcal starvation floor and 1500mg sodium limit."</div>
+      </div>
+      <div class="qa-box">
+        <div class="q">Q2: "What happens if there is no internet connection or no LLM API key?"</div>
+        <div class="a"><strong>Answer:</strong> "The app never crashes. We built a hybrid dual-mode architecture: if an external LLM key is absent, our client-side deterministic NLU engine (aiOrchestrator.ts) takes over seamlessly, handling language continuity, rejection reasoning, duration parsing, and nutrition math completely offline."</div>
+      </div>
+      <div class="qa-box">
+        <div class="q">Q3: "How does the AI handle Indian diets and local ingredients?"</div>
+        <div class="a"><strong>Answer:</strong> "Western apps suggest avocado and quinoa. HEALTH PLUS is built specifically for Indian lifestyles: homestyle regional cuisines (North, South, Gujarati, Bengali), staples like Dal, Poha, Ragi, Besan, Paneer, and factors in hostel kettles or gas stoves."</div>
+      </div>
+      <div class="qa-box">
+        <div class="q">Q4: "Where is user health data stored? Is it private?"</div>
+        <div class="a"><strong>Answer:</strong> "We follow a local-first privacy architecture. User data resides in isolated per-user browser vaults (persistenceService.ts). Password authentication uses 64-byte salted scryptSync hashing resistant to timing attacks. No user data leaks between accounts or demo profiles."</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
