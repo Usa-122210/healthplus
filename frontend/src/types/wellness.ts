@@ -308,7 +308,8 @@ export type ExerciseTypeId =
   | 'lunge'
   | 'bicep_curl'
   | 'high_knees'
-  | 'wall_sit';
+  | 'wall_sit'
+  | (string & {});
 
 export interface WorkoutSession {
   id: string;

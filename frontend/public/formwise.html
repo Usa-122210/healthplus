@@ -707,8 +707,28 @@
       window.location.href = redirectUrl;
     }
 
-    // Initialize UI on load
-    selectExercise("pushup");
+    // Initialize UI on load with optional URL preset query param
+    const initialEx = new URLSearchParams(window.location.search).get("exercise");
+    const normalizedEx = (initialEx || "pushup").replace(/-/g, "_").toLowerCase();
+    const aliasMap = {
+      push_up: "pushup",
+      pushup: "pushup",
+      squat: "squat",
+      squats: "squat",
+      jumping_jacks: "jumping_jack",
+      jumping_jack: "jumping_jack",
+      lunge: "lunge",
+      lunges: "lunge",
+      bicep_curl: "bicep_curl",
+      bicep_curls: "bicep_curl",
+      curl: "bicep_curl",
+      high_knees: "high_knees",
+      high_knee: "high_knees",
+      wall_sit: "wall_sit",
+      wallsit: "wall_sit"
+    };
+    const targetKey = aliasMap[normalizedEx] || (EXERCISE_PRESETS[normalizedEx] ? normalizedEx : "pushup");
+    selectExercise(targetKey);
   </script>
 </body>
 </html>
