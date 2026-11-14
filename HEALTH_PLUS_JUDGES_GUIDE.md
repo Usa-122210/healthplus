@@ -1,4 +1,4 @@
-# HEALTH PLUS — Complete Project Workflow, Technical Architecture & Judges Presentation Guide
+# HEALTH PLUS — Complete Project Workflow & Judges Presentation Guide
 
 **Team:** CASA Vital  
 **Product:** HEALTH PLUS  
@@ -11,7 +11,7 @@
 ## 1. Executive Summary & Core Product Vision
 
 ### The Problem in Today's Health & Fitness Apps
-- **Disconnected Dashboards:** Users are bombarded with dozens of overwhelming graphs, tables, and calories that feel like accounting software.
+- **Disconnected Dashboards:** Users are overwhelmed by 50 different graphs, tables, and calories that feel like accounting software.
 - **Superficial "Sticker" AI:** Chatbots are isolated widgets that give generic template responses, forget previous answers, and cannot reason about why a user rejected a suggestion.
 - **Repetitive Data Entry:** Information entered during onboarding is rarely shared with food recommendations, workout guidance, or daily progress.
 
@@ -27,49 +27,30 @@ HEALTH PLUS is built as **ONE connected, living AI wellness companion**:
 
 ## 2. Complete End-to-End System Workflow
 
-```text
-                             [ USER VISITS APP ]
-                                      ↓
-                     1. PUBLIC LANDING PAGE (/)
-             • Botanical 3D Orb & Cinematic Environment
-             • Interactive Preview (Try AI without login)
-             • Medical Referral Disclaimers & Privacy Notice
-                                      ↓
-                     2. AUTHENTICATION GATEWAY (/login, /signup)
-             • Dedicated Login & Sign Up Screens
-             • 3 Pre-Created Demo Accounts (General, Fitness, Dietary)
-             • Real Salted Scrypt Authentication (Zero Bypass)
-                                      ↓
-                     3. CONVERSATIONAL AI ONBOARDING (/onboarding)
-             • Stage 1: Welcome & Philosophy
-             • Stage 2: Biometrics (Age, Gender, Height, Weight)
-             • Stage 3: Primary Goal Selection
-             • Stage 4: Health Safety Screening (Allergies + Diabetes Follow-Up)
-             • Stage 5: Food Preferences & Indian Cuisine
-             • Stage 6: Exercise Preferences & Available Equipment
-             • Stage 7: Kitchen Staples & Pantry Availability
-             • Stage 8: Profile Review & Explicit Confirmation
-                                      ↓
-                     4. CLINICAL TARGETS GENERATION
-             • BMR (Mifflin-St Jeor) & TDEE Calculated
-             • Calorie Floor Applied (>= 1200 kcal/day)
-             • Sodium Limit (1500mg) & Protein Bounds Enforced
-                                      ↓
-                 5. CONNECTED DAILY COMPANION EXPERIENCE
-                                      ↓
- ┌──────────────────┬──────────────────┬──────────────────┬──────────────────┐
- ↓                  ↓                  ↓                  ↓                  ↓
-PILLAR 1:          PILLAR 2:          PILLAR 3:          PILLAR 4:          PILLAR 5:
-TODAY              FOOD HUB           MOVE STUDIO        AI COACH           PROGRESS
-• 1 AI Summary     • Safe Recipes     • 3D Kinematic     • Floating Orb &   • Data Sovereignty
-• 1 Clear Action   • Macro Derivation   Human Pose         Full Studio      • Multi-Day Rolling
-• Hydration Log    • Daily Meal Plan  • Biomechanics     • Hinglish Voice     Corridor
-• Daily Streak     • Smart Grocery      Cues             • Rejection Math   • Averages Charts
-                   • Meal Diary       • Reps Tracker     • Pantry Memory    • Rep Totals
- └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
-                                      ↑
-                   SHARED USER VAULT & MEMORY CACHE
-                   (Real-time Context Sync Across All Pages)
+```mermaid
+flowchart TD
+    subgraph Frontend["HEALTH PLUS Web App (React 19 + TypeScript + Vite)"]
+        Landing["1. Landing Page (Botanical 3D Environment)"] --> Auth["2. Auth Gateway (/login & /signup)"]
+        Auth --> Onboarding["3. 8-Stage Adaptive Clinical Interview"]
+        Onboarding --> Targets["4. Clinical Targets (BMR, TDEE, Safe Macro Floors)"]
+        Targets --> State["5. Central AppContext (Shared State & Memory)"]
+        
+        State --> P1["Pillar 1: TODAY (Calm Daily Briefing & Next Action)"]
+        State --> P2["Pillar 2: FOOD HUB (Safe Recipes, Scanner, Grocery)"]
+        State --> P3["Pillar 3: MOVE STUDIO (3D Kinematic Human Pose)"]
+        State --> P4["Pillar 4: AI COACH (Hinglish Voice, Rejection Reasoning)"]
+        State --> P5["Pillar 5: PROGRESS (Data Sovereignty Corridor)"]
+        
+        State <--> Vault["Local Vault Storage (Per-User Isolated JSON)"]
+    end
+
+    subgraph Backend["Vercel Serverless Functions (/api)"]
+        AuthAPI["/api/auth/* (Salted Scrypt Verification)"]
+        HealthAPI["/api/health (Service Status)"]
+        AiAPI["/api/ai/chat (Hybrid LLM + Safety Validator)"]
+    end
+
+    Frontend <--> Backend
 ```
 
 ---
@@ -100,7 +81,7 @@ TODAY              FOOD HUB           MOVE STUDIO        AI COACH           PROG
 
 ## 4. Pre-Created Demo Accounts for Judges
 
-Judges do not need to register. They can log in directly with these 3 pre-seeded accounts:
+Judges do not need to register. They can log in immediately from the *"Explore HEALTH PLUS"* section on the Login screen:
 
 | Demo Category | Email | Password | Pre-Loaded Sample Profile & Features |
 | :--- | :--- | :--- | :--- |
@@ -113,16 +94,18 @@ Judges do not need to register. They can log in directly with these 3 pre-seeded
 ## 5. 3-Minute Live Demo Pitch Script (Word-for-Word for Judges)
 
 ### Minute 1: The Hook & Core Problem (Landing Page)
-> *"Namaste Judges! Today's health apps are broken. They overwhelm users with 50 different disconnected graphs, generic calorie counters that feel like Excel sheets, and chatbots that forget what you said two seconds ago.*  
-> *We built **HEALTH PLUS: Observe. Understand. Guide.** It is not another dashboard. It is a **connected, living AI wellness companion** designed specifically for Indian lifestyles and clinical safety."*
+> *"Namaste Judges! Today's health apps are broken. They overwhelm users with 50 disconnected charts and chatbots that forget what you said two seconds ago.*  
+> *We built **HEALTH PLUS: Observe. Understand. Guide.** It is not another dashboard. It is a **connected, living AI wellness companion** designed specifically for Indian lifestyles and clinical safety."*  
 > *(Show Landing Page on https://healthplus-iota.vercel.app)*: Point out the cinematic botanical design, calm typography, and privacy-first commitment.
 
 ### Minute 2: Instant Demo Login & Connected 5 Pillars (Today, Food, Move)
 > *(Click `Sign In` -> Click `Continue as General Wellness Demo`)*  
 > *"To let judges test immediately, we built 3 pre-seeded demo accounts using real salted password verification.*  
 > *1. **TODAY:** Look at this screen—no overwhelming card jungle. Just **1 calm AI summary line** and **1 single next important action**.*  
-> *2. **FOOD HUB:** Tailored to Indian kitchens. The 'Daily Plan & Grocery' tab pre-computes a safe 4-slot Indian meal plan and lists missing groceries.*  
-> *3. **MOVE STUDIO:** An interactive Three.js 3D kinematic human avatar demonstrates squats with real biomechanics cues, paired with a rapid rep counter."*
+> *2. **FOOD HUB:** Complete Indian Nutrition engine with 574+ items, AI food scanner, meal history, and daily grocery planning.*  
+> *3. **MOVE STUDIO:** Two revolutionary workout capabilities in one place:*  
+> *   a) **443+ 3D Movement Library:** Interactive Three.js 3D motion player with 3 realistic avatars (Athletic Man, Casual Woman, Mannequin), 443 animated preview GIFs, 13 categories, 360° orbit rotation, and ACSM MET calorie burn formulas.*  
+> *   b) **Ayush Pathak's Formwise AI Camera Tracker:** On-device 33-landmark MediaPipe pose counter running in a clean separate window with real-time audio posture feedback ('Wrong form. Please correct your posture') and **automatic cross-window telemetry sync** that instantly updates Health Plus's Daily Activity Rings and Progress Reports!"*
 
 ### Minute 3: The "WOW" AI Coach Demonstration (Language, Rejection Reasoning, Math)
 > *(Open **AI COACH** and speak/type in Hinglish)*:  
@@ -152,7 +135,3 @@ Judges do not need to register. They can log in directly with these 3 pre-seeded
 
 - **Q4: "Where is user health data stored? Is it private?"**  
   **Ans:** *"We follow a local-first privacy architecture. User data resides in isolated per-user browser vaults (`persistenceService.ts`). Password authentication uses 64-byte salted `scryptSync` hashing resistant to timing attacks. No user data leaks between accounts or demo profiles."*
-
----
-
-**HEALTH PLUS — Observe. Understand. Guide.**
